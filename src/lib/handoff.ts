@@ -1,12 +1,12 @@
 /**
- * Magic-link handoff — makes the emailed link work for the iPhone home-screen app.
+ * Sign-in handoff — makes Google / email sign-in work for the iPhone home-screen app.
  *
  * On iOS an installed web app has its own storage, separate from Safari. When you
- * tap the email link it opens in Safari (or the Gmail in-app browser), which can't
+ * a sign-in finishes in Safari (or the Gmail in-app browser) instead, that browser can't
  * finish the sign-in because the PKCE verifier lives in the app. So:
  *
- *  1. The app requests the email with `?handoff=<random secret>` in the redirect URL.
- *  2. The browser that opens the link can't redeem the code, so it files
+ *  1. The app starts sign-in with `?handoff=<random secret>` in the redirect URL.
+ *  2. A browser that lands there but can't redeem the code files
  *     `{code, flowId}` under that secret via the `put_handoff` RPC.
  *  3. The app polls `take_handoff`, gets the code and redeems it with its own verifier.
  *
@@ -22,11 +22,34 @@ function randomId(): string {
   return Array.from(b, x => x.toString(16).padStart(2, '0')).join('')
 }
 
-export async function sendMagicLink(email: string) {
+const MAX_AGE = 15 * 60 * 1000
+
+/** Starts a pending handoff and returns the URL the sign-in should come back to. */
+function newRedirect(): string {
   const id = randomId()
-  try { localStorage.setItem(PENDING, id) } catch {}
-  const redirect = `${location.origin}/?handoff=${id}`
-  return supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } })
+  try { localStorage.setItem(PENDING, JSON.stringify({ id, at: Date.now() })) } catch {}
+  return `${location.origin}/?handoff=${id}`
+}
+
+function pendingId(): string | null {
+  try {
+    const raw = localStorage.getItem(PENDING)
+    if (!raw) return null
+    const { id, at } = JSON.parse(raw)
+    if (Date.now() - at > MAX_AGE) { localStorage.removeItem(PENDING); return null }
+    return id
+  } catch { return null }
+}
+
+export async function signInWithGoogle() {
+  return supabase!.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: newRedirect(), queryParams: { prompt: 'select_account' } },
+  })
+}
+
+export async function sendMagicLink(email: string) {
+  return supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: newRedirect() } })
 }
 
 export type RedirectResult = 'none' | 'signed-in' | 'handed-off' | 'error'
@@ -65,8 +88,7 @@ export async function pollHandoff(): Promise<boolean> {
   const { data: s } = await supabase.auth.getSession()
   if (s.session) return true
 
-  let id: string | null = null
-  try { id = localStorage.getItem(PENDING) } catch {}
+  const id = pendingId()
   if (!id) return false
   const { data, error } = await supabase.rpc('take_handoff', { p_id: id })
   const row = Array.isArray(data) ? data[0] : data
@@ -77,4 +99,4 @@ export async function pollHandoff(): Promise<boolean> {
   return true
 }
 
-export const hasPendingHandoff = () => { try { return !!localStorage.getItem(PENDING) } catch { return false } }
+export const hasPendingHandoff = () => !!pendingId()

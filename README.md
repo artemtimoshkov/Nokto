@@ -10,13 +10,26 @@ Stack: Vite + React + TypeScript, Supabase (auth + Postgres), and a PWA via `vit
 ## 1. Supabase
 
 1. In **SQL Editor**, paste and run [`supabase/schema.sql`](supabase/schema.sql). It creates the `goals` and `todos` tables with row-level security, a trigger that seeds placeholder goals for each new account, and the small sign-in handoff table described below. You can safely run it again after updates.
-2. In **Authentication → Sign In / Providers**, make sure **Email** is enabled.
+2. Turn on Google sign-in. See **Google sign-in** below. Keep **Email** enabled too, since it's the backup option.
 3. In **Authentication → URL Configuration**, set:
    - **Site URL**: your Vercel URL, for example `https://nokto.vercel.app`.
    - **Redirect URLs**: add `https://nokto.vercel.app/**` and `http://localhost:5173/**`, using your own domain. Keep the `/**`: sign-in links carry extra parameters, and without it Supabase rejects them.
 4. In **Project Settings → API**, copy the **Project URL** and the **anon public** key.
 
 You don't need to edit any email templates.
+
+### Google sign-in
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a project, for example "Nokto".
+2. Open **APIs & Services → OAuth consent screen** (also called **Google Auth Platform**):
+   - App name **Nokto**, your email as the support email, audience **External**.
+   - Under **Audience**, either click **Publish app**, or add your Gmail under **Test users**.
+3. Open **APIs & Services → Credentials → Create credentials → OAuth client ID**:
+   - Application type: **Web application**
+   - **Authorized JavaScript origins**: your Vercel URL, for example `https://nokto.vercel.app`
+   - **Authorized redirect URIs**: `https://YOUR-PROJECT.supabase.co/auth/v1/callback`, using your Supabase Project URL followed by `/auth/v1/callback`
+   - Click **Create**, then copy the **Client ID** and **Client secret**.
+4. In Supabase, go to **Authentication → Sign In / Providers → Google**. Turn it on, paste the Client ID and Client secret, and click **Save**.
 
 ## 2. Vercel
 
@@ -28,7 +41,7 @@ You don't need to edit any email templates.
 
 ## 3. Install on your phone
 
-- **iPhone**: open the Vercel URL in Safari, tap **Share**, then **Add to Home Screen**. Open Nokto from the home screen, enter your email, and tap the link in the email. It opens in Safari; switch back to Nokto and you're signed in.
+- **iPhone**: open the Vercel URL in Safari, tap **Share**, then **Add to Home Screen**. Open Nokto from the home screen and tap **Continue with Google**. If Google opens in Safari instead, finish there, then switch back to Nokto and you'll be signed in.
 - **Android**: open the URL in Chrome, tap **⋮**, then **Install app**.
 - **Laptop**: in Chrome or Edge, click the install icon in the address bar, or just use it in a browser tab.
 
@@ -54,5 +67,5 @@ Without env vars, the login screen offers a **demo mode** that stores data only 
 
 - **Sorting**: to-dos are grouped into Overdue, Today, upcoming days, and No date. Within each group they're sorted by priority (P1 → P3), then date, then time. A to-do saved without a priority gets P3.
 - **Repeats**: ticking off a repeating to-do moves it to the next occurrence after today, and you can undo that. A series with an end date completes for good after its last occurrence. The rules live in `src/lib/recurrence.ts`, with tests alongside.
-- **Sign-in on iPhone**: a home-screen app keeps its own storage, separate from Safari, so the emailed link opens in the wrong place. Nokto handles this: the app asks for the link with a random secret attached. Safari, which can't finish the sign-in, files the one-time code under that secret, and the app picks it up and redeems it. Redeeming the code needs a key that stays inside the app (PKCE), so the code is useless on its own. See `src/lib/handoff.ts`.
+- **Sign-in on iPhone**: a home-screen app keeps its own storage, separate from Safari, so a sign-in that finishes in Safari (Google or the email link) can't reach the app on its own. Nokto handles this: the app asks for the link with a random secret attached. Safari, which can't finish the sign-in, files the one-time code under that secret, and the app picks it up and redeems it. Redeeming the code needs a key that stays inside the app (PKCE), so the code is useless on its own. See `src/lib/handoff.ts`.
 - **Sync**: changes save to Supabase right away and appear on screen before the server confirms. The app refetches whenever it comes back into focus, so your phone and laptop stay in step.

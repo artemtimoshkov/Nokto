@@ -4,7 +4,8 @@ import { supabase } from './lib/supabase'
 import { localBackend, supabaseBackend } from './lib/backend'
 import { StoreProvider } from './lib/store'
 import { useRoute } from './lib/route'
-import { Login } from './auth/Login'
+import { Login, HandedOff } from './auth/Login'
+import { handleAuthRedirect } from './lib/handoff'
 import { Today } from './screens/Today'
 import { Goals } from './screens/Goals'
 import { AreaGoals } from './screens/AreaGoals'
@@ -19,10 +20,20 @@ export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(supabase ? undefined : null)
   const [demo, setDemo] = useState(() => { try { return !supabase && localStorage.getItem(DEMO_KEY) === '1' } catch { return false } })
 
+  const [handedOff, setHandedOff] = useState(false)
+  const [notice, setNotice] = useState<string>()
+
   useEffect(() => {
     if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const sb = supabase
+    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s))
+    // Finish a sign-in from the email link (if any) before deciding what to show.
+    handleAuthRedirect().then(async r => {
+      if (r.result === 'handed-off') setHandedOff(true)
+      if (r.result === 'error') setNotice(r.message)
+      const { data: s } = await sb.auth.getSession()
+      setSession(s.session)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -30,7 +41,8 @@ export default function App() {
   const backend = useMemo(() => userKey === 'demo' ? localBackend() : userKey ? supabaseBackend() : null, [userKey])
 
   if (session === undefined) return <div className="splash" />
-  if (!backend) return <Login onDemo={() => { try { localStorage.setItem(DEMO_KEY, '1') } catch {} setDemo(true) }} />
+  if (handedOff && !session) return <HandedOff />
+  if (!backend) return <Login notice={notice} onDemo={() => { try { localStorage.setItem(DEMO_KEY, '1') } catch {} setDemo(true) }} />
 
   const signOut = async () => {
     if (supabase) await supabase.auth.signOut()

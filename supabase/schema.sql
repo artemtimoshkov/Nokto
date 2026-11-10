@@ -77,3 +77,40 @@ begin
     perform public.seed_goals(u.id);
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Magic-link handoff: lets the iPhone home-screen app finish a sign-in whose
+-- email link opened in Safari. Stores only the one-time PKCE code, which is
+-- useless without the verifier that stays inside the app. Rows live minutes.
+create table if not exists public.auth_handoffs (
+  id text primary key,
+  code text not null,
+  flow_id text,
+  created_at timestamptz not null default now()
+);
+alter table public.auth_handoffs enable row level security; -- no policies: access only via the functions below
+
+create or replace function public.put_handoff(p_id text, p_code text, p_flow_id text default null) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if length(p_id) < 32 or length(p_id) > 128 or length(p_code) > 256 or length(coalesce(p_flow_id, '')) > 64 then
+    raise exception 'invalid handoff';
+  end if;
+  delete from public.auth_handoffs where created_at < now() - interval '15 minutes';
+  insert into public.auth_handoffs (id, code, flow_id) values (p_id, p_code, p_flow_id)
+    on conflict (id) do update set code = excluded.code, flow_id = excluded.flow_id, created_at = now();
+end $$;
+
+create or replace function public.take_handoff(p_id text) returns table (code text, flow_id text)
+language plpgsql security definer set search_path = public as $$
+begin
+  return query
+    delete from public.auth_handoffs h
+    where h.id = p_id and h.created_at > now() - interval '10 minutes'
+    returning h.code, h.flow_id;
+end $$;
+
+revoke all on function public.put_handoff(text, text, text) from public;
+revoke all on function public.take_handoff(text) from public;
+grant execute on function public.put_handoff(text, text, text) to anon, authenticated;
+grant execute on function public.take_handoff(text) to anon, authenticated;

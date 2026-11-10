@@ -177,3 +177,12 @@ select { flex: 1; height: 44px; border-radius: 10px; border: 0; background: var(
 .row-btns { display: flex; justify-content: center; gap: 8px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Waiting for the email link */
+.login-form.tight { margin-top: 4px; }
+.waiting { display: flex; justify-content: center; gap: 6px; padding: 4px 0 6px; }
+.waiting span { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 1.2s ease-in-out infinite; }
+.waiting span:nth-child(2) { animation-delay: .15s; }
+.waiting span:nth-child(3) { animation-delay: .3s; }
+@keyframes pulse { 0%, 80%, 100% { opacity: .2; transform: scale(.8); } 40% { opacity: 1; transform: none; } }
+.row-btns { flex-wrap: wrap; }

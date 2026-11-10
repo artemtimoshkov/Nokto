@@ -8,7 +8,7 @@ export function TabBar({ tab }: { tab: 'today' | 'goals' }) {
         <Icon d={I.today} size={22} /><span>Today</span>
       </button>
       <button className={tab === 'goals' ? 'active' : ''} onClick={() => go('/goals')}>
-        <Icon d={I.star} size={22} /><span>Goals</span>
+        <Icon d={I.star} size={22} /><span>Bucket list</span>
       </button>
     </nav>
   )

@@ -27,16 +27,16 @@ export function GoalSheet({ open, area, goal, onClose }: { open: boolean; area: 
   return (
     <Sheet open={open} onClose={onClose} className="todo-sheet">
       <div className="sheet-kicker">{areaById(area)?.name}</div>
-      <textarea ref={ref} className="title-input" rows={1} placeholder="Goal" value={title}
+      <textarea ref={ref} className="title-input" rows={1} placeholder="Item" value={title}
         onChange={e => setTitle(e.target.value.replace(/\n/g, ''))}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />
       <textarea className="note-input" rows={3} placeholder="Note" value={note}
         onChange={e => setNote(e.target.value)} />
       <div className="sheet-foot">
         {goal
-          ? <button className="icon-btn danger" aria-label="Delete goal" onClick={() => { store.deleteGoal(goal.id); onClose() }}><Icon d={I.trash} /></button>
+          ? <button className="icon-btn danger" aria-label="Delete item" onClick={() => { store.deleteGoal(goal.id); onClose() }}><Icon d={I.trash} /></button>
           : <span />}
-        <button className="send" aria-label={goal ? 'Save goal' : 'Add goal'} disabled={!title.trim()} onClick={submit}>
+        <button className="send" aria-label={goal ? 'Save item' : 'Add item'} disabled={!title.trim()} onClick={submit}>
           <Icon d={goal ? I.check : I.arrowUp} size={20} />
         </button>
       </div>

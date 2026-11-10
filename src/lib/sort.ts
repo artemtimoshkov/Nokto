@@ -14,7 +14,7 @@ export interface Section { key: string; title: string; kind: 'overdue' | 'today'
 
 export function groupTodos(todos: Todo[], now = today()): Section[] {
   const t = toKey(now)
-  const open = todos.filter(x => !x.completed_at)
+  const open = todos.filter(x => !x.completed_at && !x.failed_at)
   const overdue = open.filter(x => x.due_date && x.due_date < t).sort(compareTodos)
   const todayList = open.filter(x => x.due_date === t).sort(compareTodos)
   const future = open.filter(x => x.due_date && x.due_date > t)

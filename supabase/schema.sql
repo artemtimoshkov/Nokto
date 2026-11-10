@@ -114,3 +114,24 @@ revoke all on function public.put_handoff(text, text, text) from public;
 revoke all on function public.take_handoff(text) from public;
 grant execute on function public.put_handoff(text, text, text) to anon, authenticated;
 grant execute on function public.take_handoff(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Missed tasks + history. A missed one-off task gets failed_at and leaves the
+-- list; a missed repeating task moves to its next date. Every done/missed
+-- occurrence is recorded in todo_log (useful later for streaks).
+alter table public.todos add column if not exists failed_at timestamptz;
+
+create table if not exists public.todo_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  todo_id uuid references public.todos(id) on delete set null,
+  title text not null,
+  due_date date,
+  status text not null check (status in ('done', 'missed')),
+  created_at timestamptz not null default now()
+);
+create index if not exists todo_log_user_idx on public.todo_log(user_id, created_at desc);
+alter table public.todo_log enable row level security;
+drop policy if exists "own log" on public.todo_log;
+create policy "own log" on public.todo_log for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());

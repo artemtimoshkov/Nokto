@@ -68,7 +68,14 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
         </div>
         <div className="sheet-foot">
           {todo
-            ? <button className="icon-btn danger" aria-label="Delete" onClick={() => { store.deleteTodo(todo.id); onClose() }}><Icon d={I.trash} /></button>
+            ? (
+              <div className="foot-left">
+                <button className="icon-btn danger" aria-label="Delete" onClick={() => { store.deleteTodo(todo.id); onClose() }}><Icon d={I.trash} /></button>
+                <button className="miss-text" onClick={() => { onClose(); setTimeout(() => store.missTodo(todo), 200) }}>
+                  <Icon d={I.missed} size={18} />Missed
+                </button>
+              </div>
+            )
             : <span />}
           <button className="send" aria-label={todo ? 'Save' : 'Add to-do'} disabled={!title.trim()} onClick={submit}>
             {todo ? <Icon d={I.check} size={20} /> : <Icon d={I.arrowUp} size={20} />}

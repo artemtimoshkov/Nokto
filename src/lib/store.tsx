@@ -2,10 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Backend } from './backend'
 import type { AreaId, Goal, Todo } from './types'
 import { nextDue } from './recurrence'
-import { describe } from './recurrence'
 import { dayLabel } from './dates'
 
-export type TodoDraft = Omit<Todo, 'id' | 'created_at' | 'completed_at'>
+export type TodoDraft = Omit<Todo, 'id' | 'created_at' | 'completed_at' | 'failed_at'>
 interface Toast { id: number; text: string; undo?: () => void }
 
 interface Store {
@@ -17,6 +16,7 @@ interface Store {
   addTodo(d: TodoDraft): void
   saveTodo(id: string, patch: Partial<Todo>): void
   completeTodo(t: Todo): void
+  missTodo(t: Todo): void
   deleteTodo(id: string): void
   addGoal(area: AreaId, title: string, note: string): void
   saveGoal(id: string, patch: Partial<Goal>): void
@@ -61,6 +61,30 @@ export function StoreProvider({ backend, children }: { backend: Backend; childre
 
   const fail = useCallback((e: unknown) => { console.error(e); show("Couldn't sync. Retrying…"); refresh() }, [refresh, show])
 
+  /**
+   * Done or missed: a one-off task leaves the list (completed_at / failed_at);
+   * a repeating task moves to its next date, so only today's occurrence goes.
+   */
+  const finish = (t: Todo, status: 'done' | 'missed') => {
+    const prev = { due_date: t.due_date, completed_at: t.completed_at ?? null, failed_at: t.failed_at ?? null }
+    const next = t.recurrence ? nextDue(t.recurrence, t.due_date) : null
+    const stamp = new Date().toISOString()
+    const patch: Partial<Todo> = next ? { due_date: next } : status === 'done' ? { completed_at: stamp } : { failed_at: stamp }
+    setTodos(ts => next ? ts.map(x => x.id === t.id ? { ...x, ...patch } : x) : ts.filter(x => x.id !== t.id))
+    backend.updateTodo(t.id, patch).catch(fail)
+    const logId = crypto.randomUUID?.() ?? tmpId()
+    const real = !t.id.startsWith('tmp-')
+    backend.log({ id: logId, todo_id: real ? t.id : null, title: t.title, due_date: t.due_date, status }).catch(() => {})
+    const undo = () => {
+      setTodos(ts => next ? ts.map(x => x.id === t.id ? { ...x, ...prev } : x) : [...ts, { ...t, ...prev }])
+      const revert: Partial<Todo> = next ? { due_date: prev.due_date } : status === 'done' ? { completed_at: null } : { failed_at: null }
+      backend.updateTodo(t.id, revert).catch(fail)
+      backend.unlog(logId).catch(() => {})
+    }
+    const label = status === 'done' ? 'Completed' : 'Missed'
+    show(next ? `${label} · next ${dayLabel(next).toLowerCase()}` : label, undo)
+  }
+
   const store = useMemo<Store>(() => ({
     goals, todos, loading, toast,
     dismissToast: () => setToast(null),
@@ -77,18 +101,8 @@ export function StoreProvider({ backend, children }: { backend: Backend; childre
       setTodos(ts => ts.map(t => t.id === id ? { ...t, ...patch } : t))
       backend.updateTodo(id, patch).catch(fail)
     },
-    completeTodo(t) {
-      const prev = { due_date: t.due_date, completed_at: t.completed_at }
-      const next = t.recurrence ? nextDue(t.recurrence, t.due_date) : null
-      const patch: Partial<Todo> = next ? { due_date: next } : { completed_at: new Date().toISOString() }
-      setTodos(ts => next ? ts.map(x => x.id === t.id ? { ...x, ...patch } : x) : ts.filter(x => x.id !== t.id))
-      backend.updateTodo(t.id, patch).catch(fail)
-      const undo = () => {
-        setTodos(ts => next ? ts.map(x => x.id === t.id ? { ...x, ...prev } : x) : [...ts, { ...t, ...prev }])
-        backend.updateTodo(t.id, prev).catch(fail)
-      }
-      show(next ? `Next: ${dayLabel(next)} · ${describe(t.recurrence!)}` : 'Completed', undo)
-    },
+    completeTodo(t) { finish(t, 'done') },
+    missTodo(t) { finish(t, 'missed') },
     deleteTodo(id) {
       const t = todos.find(x => x.id === id)
       setTodos(ts => ts.filter(x => x.id !== id))

@@ -18,7 +18,7 @@ export function Sidebar({ route, email, onAccount }: { route: Route; email: stri
           <Icon d={I.today} size={19} /><span className="grow">Today</span>{due > 0 && <span className="side-count">{due}</span>}
         </button>
         <button className={route.tab === 'goals' && !area ? 'active' : ''} onClick={() => go('/goals')}>
-          <Icon d={I.star} size={19} /><span className="grow">Goals</span>
+          <Icon d={I.star} size={19} /><span className="grow">Bucket list</span>
         </button>
       </nav>
       <nav className="side-nav areas-nav">

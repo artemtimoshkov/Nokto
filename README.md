@@ -3,7 +3,7 @@
 Your North Star goals and everyday to-dos in one minimal app. It installs on your phone from the web and syncs across every device through your account.
 
 - **Today**: Todoist-style to-dos with priority, area of life, date, time and repeats (daily, weekdays, weekly, monthly, quarterly, or custom with an end date).
-- **Goals**: a bucket list across 10 areas of life, pre-filled with placeholder North Star goals you can edit.
+- **Bucket list**: life goals across 10 areas of life, pre-filled with placeholder goals you can edit.
 
 Stack: Vite + React + TypeScript, Supabase (auth + Postgres), and a PWA via `vite-plugin-pwa`, deployed on Vercel.
 
@@ -68,4 +68,5 @@ Without env vars, the login screen offers a **demo mode** that stores data only 
 - **Sorting**: to-dos are grouped into Overdue, Today, upcoming days, and No date. Within each group they're sorted by priority (P1 → P3), then date, then time. A to-do saved without a priority gets P3.
 - **Repeats**: ticking off a repeating to-do moves it to the next occurrence after today, and you can undo that. A series with an end date completes for good after its last occurrence. The rules live in `src/lib/recurrence.ts`, with tests alongside.
 - **Sign-in on iPhone**: a home-screen app keeps its own storage, separate from Safari, so a sign-in that finishes in Safari (Google or the email link) can't reach the app on its own. Nokto handles this: the app asks for the link with a random secret attached. Safari, which can't finish the sign-in, files the one-time code under that secret, and the app picks it up and redeems it. Redeeming the code needs a key that stays inside the app (PKCE), so the code is useless on its own. See `src/lib/handoff.ts`.
+- **Missed**: swipe a task left on your phone (or use **Missed** in its window, or the × on hover on a laptop) to cross it out. A one-off task leaves the list but isn't deleted. A repeating task skips only today's occurrence and moves to the next date. Each done or missed occurrence is recorded in `todo_log`.
 - **Sync**: changes save to Supabase right away and appear on screen before the server confirms. The app refetches whenever it comes back into focus, so your phone and laptop stay in step.

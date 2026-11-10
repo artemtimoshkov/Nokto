@@ -73,15 +73,15 @@ code { font-size: .85em; background: var(--elev); padding: 1px 5px; border-radiu
 .tabbar button.active { color: var(--red); }
 
 /* ---------- Toast ---------- */
-.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 152px); transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 12px; display: flex; gap: 16px; align-items: center; font-size: 14px; max-width: calc(100vw - 32px); z-index: 15; animation: toast .3s var(--ease) both; box-shadow: 0 8px 28px rgba(0,0,0,.18); }
+.toast { position: fixed; left: 16px; bottom: calc(env(safe-area-inset-bottom) + 72px); background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 12px; display: flex; gap: 16px; align-items: center; font-size: 14px; max-width: calc(100vw - 112px); z-index: 15; animation: toast .3s var(--ease) both; box-shadow: 0 8px 28px rgba(0,0,0,.18); }
 .toast span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toast button { color: var(--red); font-weight: 600; flex: none; }
-@keyframes toast { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes toast { from { opacity: 0; transform: translateY(8px); } }
 
 /* ---------- Sheet ---------- */
-.sheet-root { position: fixed; inset: 0; z-index: 20; }
-.sheet-backdrop { position: absolute; inset: 0; background: var(--backdrop); opacity: 0; transition: opacity .28s var(--ease); }
-.sheet { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 640px; max-height: 92dvh; overflow-y: auto; background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: var(--shadow); padding: 0 20px calc(env(safe-area-inset-bottom) + 16px); transform: translateY(100%); transition: transform .28s var(--ease); }
+.sheet-root { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); z-index: 20; }
+.sheet-backdrop { position: absolute; inset: 0; touch-action: none; background: var(--backdrop); opacity: 0; transition: opacity .28s var(--ease); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 640px; max-height: calc(100% - 12px); overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: var(--shadow); padding: 0 20px calc(env(safe-area-inset-bottom) + 16px); transform: translateY(100%); transition: transform .28s var(--ease); }
 .shown .sheet-backdrop { opacity: 1; }
 .shown .sheet { transform: none; }
 .sheet-handle { display: flex; justify-content: center; padding: 8px 0 6px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
@@ -258,5 +258,32 @@ select { flex: 1; height: 44px; border-radius: 10px; border: 0; background: var(
   .sheet.time-sheet, .sheet.date-sheet { width: 400px; }
   .sheet-title { padding-top: 10px; }
   .fab { display: none; }
-  .toast { bottom: 28px; left: calc(50% + 132px); }
+  .toast { bottom: 28px; left: calc(50% + 132px); transform: translateX(-50%); max-width: 480px; }
+  @keyframes toast { from { opacity: 0; transform: translate(-50%, 8px); } }
+}
+
+/* Page frozen while a sheet is open (stops background scrolling on iOS) */
+html.sheet-open, html.sheet-open body { overflow: hidden; overscroll-behavior: none; }
+/* Keyboard up: no home-indicator padding needed, keep the sheet snug on the keys */
+html.kb-open .sheet { padding-bottom: 12px; border-radius: 18px 18px 0 0; }
+html.kb-open .sheet-handle { padding: 6px 0 2px; }
+
+/* ---------- Swipe left = missed ---------- */
+.todo-wrap { position: relative; list-style: none; overflow: hidden; }
+.todo-wrap .todo { position: relative; background: var(--bg); transition: transform .25s var(--ease); touch-action: pan-y; }
+.swipe-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-right: 18px; color: var(--text-2); font-size: 14px; font-weight: 500; background: var(--elev); }
+.swipe-bg.armed { color: #fff; background: var(--text-2); }
+.todo-wrap.missing .todo-title { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--text-3); }
+.todo-wrap.missing { animation: miss-out .42s var(--ease) forwards; }
+.todo-wrap.missing .todo { transform: none !important; }
+@keyframes miss-out { 0%, 45% { opacity: 1; max-height: 90px; } 100% { opacity: 0; max-height: 0; } }
+.miss-btn { display: none; align-self: center; width: 28px; height: 28px; border-radius: 50%; place-items: center; color: var(--text-3); flex: none; }
+.miss-btn:hover { color: var(--text); background: var(--elev); }
+.foot-left { display: flex; align-items: center; gap: 4px; }
+.miss-text { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 18px; color: var(--text-2); font-size: 14px; font-weight: 500; }
+.miss-text:hover { background: var(--elev); color: var(--text); }
+@media (hover: hover) and (min-width: 900px) {
+  .todo:hover .miss-btn { display: grid; }
+  .todo-wrap { margin: 0 -8px; }
+  .todo-wrap .todo { background: transparent; margin: 0; }
 }

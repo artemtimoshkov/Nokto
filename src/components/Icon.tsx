@@ -18,6 +18,8 @@ export const I = {
   star: 'M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z',
   user: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z M4 21c0-4 4-6 8-6s8 2 8 6',
   note: 'M4 6h16 M4 12h16 M4 18h10',
+  x: 'M6 6l12 12 M18 6L6 18',
+  missed: 'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M9 9l6 6 M15 9l-6 6',
 }
 
 export function Icon({ d, size = 20, className, fill }: { d: string; size?: number; className?: string; fill?: boolean }) {

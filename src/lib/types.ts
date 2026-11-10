@@ -26,6 +26,7 @@ export interface Todo {
   due_time: string | null // HH:mm
   recurrence: Recurrence | null
   completed_at: string | null
+  failed_at?: string | null
   created_at: string
 }
 
@@ -38,4 +39,12 @@ export interface Goal {
   done_at: string | null
   position: number
   created_at: string
+}
+
+export interface LogEntry {
+  id: string
+  todo_id: string | null
+  title: string
+  due_date: string | null
+  status: 'done' | 'missed'
 }

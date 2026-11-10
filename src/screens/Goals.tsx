@@ -10,7 +10,7 @@ export function Goals({ onAccount }: { onAccount(): void }) {
     <main className="screen wide">
       <header className="head">
         <div>
-          <h1>Goals</h1>
+          <h1>Bucket list</h1>
           {!loading && goals.length > 0 && <p className="sub">{done} / {goals.length}</p>}
         </div>
         <button className="avatar mobile-only" aria-label="Account" onClick={onAccount}><Icon d={I.user} size={18} /></button>

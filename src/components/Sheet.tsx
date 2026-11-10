@@ -11,6 +11,19 @@ export function Sheet({ open, onClose, children, title, className = '' }: {
     if (open) { setMounted(true); requestAnimationFrame(() => requestAnimationFrame(() => setShown(true))) }
     else { setShown(false); const t = setTimeout(() => setMounted(false), 280); return () => clearTimeout(t) }
   }, [open])
+  // Freeze the page behind the sheet so it can't scroll while typing.
+  useEffect(() => {
+    if (!open) return
+    const html = document.documentElement
+    html.classList.add('sheet-open')
+    const n = Number(html.dataset.sheets ?? 0) + 1
+    html.dataset.sheets = String(n)
+    return () => {
+      const left = Number(html.dataset.sheets ?? 1) - 1
+      html.dataset.sheets = String(left)
+      if (left <= 0) html.classList.remove('sheet-open')
+    }
+  }, [open])
   useEffect(() => {
     if (!open) return
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }

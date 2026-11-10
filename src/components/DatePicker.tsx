@@ -28,10 +28,12 @@ export function DatePicker({ open, value, onChange, onClose }: {
   return (
     <>
       <Sheet open={open && !sub} onClose={onClose} className="date-sheet">
-        <div className="date-current">
-          {value.date ? format(fromKey(value.date), 'EEEE, d MMMM') : 'No date'}
-          {value.time && <span className="muted"> · {timeLabel(value.time)}</span>}
-        </div>
+        {value.date && (
+          <div className="date-current">
+            {format(fromKey(value.date), 'EEEE, d MMMM')}
+            {value.time && <span className="muted"> · {timeLabel(value.time)}</span>}
+          </div>
+        )}
         <div className="list compact">
           {quick.map(q => (
             <button key={q.label} className={`row ${q.cls}`} onClick={() => { setDate(toKey(q.date)); onClose() }}>

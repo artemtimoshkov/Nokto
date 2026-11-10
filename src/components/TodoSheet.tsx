@@ -49,8 +49,8 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
 
   return (
     <>
-      <Sheet open={open && !panel} onClose={onClose} className="todo-sheet" title={todo ? undefined : undefined}>
-        <textarea ref={input} className="title-input" rows={1} placeholder="e.g. Pay the grocery bill tomorrow"
+      <Sheet open={open && !panel} onClose={onClose} className="todo-sheet">
+        <textarea ref={input} className="title-input" rows={1} placeholder="Task"
           value={title} enterKeyHint="done"
           onChange={e => setTitle(e.target.value.replace(/\n/g, ''))}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />

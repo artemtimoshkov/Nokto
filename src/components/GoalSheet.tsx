@@ -26,11 +26,11 @@ export function GoalSheet({ open, area, goal, onClose }: { open: boolean; area: 
 
   return (
     <Sheet open={open} onClose={onClose} className="todo-sheet">
-      <div className="sheet-kicker">{areaById(area)?.name} · North Star</div>
-      <textarea ref={ref} className="title-input" rows={1} placeholder="e.g. Run a marathon" value={title}
+      <div className="sheet-kicker">{areaById(area)?.name}</div>
+      <textarea ref={ref} className="title-input" rows={1} placeholder="Goal" value={title}
         onChange={e => setTitle(e.target.value.replace(/\n/g, ''))}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />
-      <textarea className="note-input" rows={3} placeholder="Why it matters, what done looks like…" value={note}
+      <textarea className="note-input" rows={3} placeholder="Note" value={note}
         onChange={e => setNote(e.target.value)} />
       <div className="sheet-foot">
         {goal

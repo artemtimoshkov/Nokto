@@ -61,11 +61,9 @@ export function Login({ onDemo, notice }: { onDemo(): void; notice?: string }) {
     <main className="login">
       <div className="login-mark"><Icon d={I.star} size={34} fill /></div>
       <h1>Nokto</h1>
-      <p className="sub">Your North Star, every day.</p>
 
       {!supabase ? (
         <div className="login-form">
-          <p className="muted small center">Supabase isn’t configured yet. Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to enable accounts.</p>
           <button className="btn primary wide" onClick={onDemo}>Try the demo</button>
         </div>
       ) : mode === 'start' ? (
@@ -74,24 +72,21 @@ export function Login({ onDemo, notice }: { onDemo(): void; notice?: string }) {
             <GoogleLogo />{busy ? 'Opening Google…' : 'Continue with Google'}
           </button>
           {err && <p className="error">{err}</p>}
-          {waiting && <p className="muted small center">Finishing sign-in… If you signed in in Safari, it’ll appear here in a moment.</p>}
+          {waiting && <div className="waiting"><span /><span /><span /></div>}
           <button className="btn ghost small-btn" onClick={() => { setMode('email'); setErr('') }}>Use email instead</button>
         </div>
       ) : mode === 'email' ? (
         <form className="login-form" onSubmit={send}>
-          <input className="text" type="email" inputMode="email" autoComplete="email" placeholder="you@email.com"
+          <input className="text" type="email" inputMode="email" autoComplete="email" placeholder="Email"
             value={email} onChange={e => setEmail(e.target.value)} autoFocus />
-          <button className="btn primary wide" disabled={busy || !email.includes('@')}>{busy ? 'Sending…' : 'Email me a sign-in link'}</button>
+          <button className="btn primary wide" disabled={busy || !email.includes('@')}>{busy ? 'Sending…' : 'Send link'}</button>
           {err && <p className="error">{err}</p>}
           <button type="button" className="btn ghost small-btn" onClick={() => setMode('start')}>Back</button>
         </form>
       ) : (
         <div className="login-form">
           <div className="waiting"><span /><span /><span /></div>
-          <p className="center">Check your inbox.</p>
-          <p className="muted small center">
-            Tap the link we sent to <b>{email}</b>. It’s fine if it opens in Safari. Come back here and you’ll be signed in automatically.
-          </p>
+          <p className="center">Check {email}</p>
           {err && <p className="error">{err}</p>}
           <div className="row-btns">
             <button type="button" className="btn ghost" onClick={() => setMode('start')}>Back</button>
@@ -108,9 +103,8 @@ export function HandedOff() {
   return (
     <main className="login">
       <div className="login-mark"><Icon d={I.check} size={40} /></div>
-      <h1>You’re in.</h1>
-      <p className="sub">Go back to the Nokto app. It’s signing you in now.</p>
-      <p className="muted small center" style={{ marginTop: 28, maxWidth: 300 }}>You can close this tab.</p>
+      <h1>Signed in</h1>
+      <p className="sub">Return to Nokto</p>
     </main>
   )
 }

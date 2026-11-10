@@ -30,17 +30,17 @@ export function AreaGoals({ areaId }: { areaId: AreaId }) {
 
   return (
     <main className="screen">
-      <button className="back" onClick={() => go('/goals')}><Icon d={I.back} size={18} />Goals</button>
+      <button className="back mobile-only" onClick={() => go('/goals')}><Icon d={I.back} size={18} />Goals</button>
       <header className="head">
         <div>
           <div className="head-icon"><Icon d={area.icon} size={26} /></div>
           <h1>{area.name}</h1>
-          <p className="sub">{mine.length ? `${done.length} of ${mine.length} achieved` : 'What would make this area of life complete?'}</p>
+          {mine.length > 0 && <p className="sub">{done.length} / {mine.length}</p>}
         </div>
       </header>
 
+      <button className="add-row desktop-only" onClick={() => setSheet({ open: true, goal: null })}><Icon d={I.plus} size={18} />Add goal</button>
       <ul className="todos">{open.map(row)}</ul>
-      {!open.length && !!done.length && <p className="muted small quiet">Every goal here is achieved. Dream bigger.</p>}
 
       {!!done.length && (
         <section className="group">
@@ -51,7 +51,7 @@ export function AreaGoals({ areaId }: { areaId: AreaId }) {
         </section>
       )}
 
-      <button className="fab" aria-label="Add goal" onClick={() => setSheet({ open: true, goal: null })}>
+      <button className="fab mobile-only" aria-label="Add goal" onClick={() => setSheet({ open: true, goal: null })}>
         <Icon d={I.plus} size={26} />
       </button>
       <GoalSheet open={sheet.open} area={areaId} goal={sheet.goal} onClose={() => setSheet(s => ({ ...s, open: false }))} />

@@ -4,7 +4,7 @@ import { Sheet } from './Sheet'
 import { Icon, I } from './Icon'
 import type { Recurrence } from '../lib/types'
 import { presets, sameRule, describe } from '../lib/recurrence'
-import { ordinal, toKey } from '../lib/dates'
+import { toKey } from '../lib/dates'
 
 export function RepeatPicker({ open, base, value, onChange, onClose }: {
   open: boolean; base: Date; value: Recurrence | null; onChange(r: Recurrence | null): void; onClose(): void
@@ -69,7 +69,7 @@ function CustomRepeat({ open, base, value, onClose, onDone }: {
   const toggle = (d: number) => setDays(ds => ds.includes(d) ? (ds.length > 1 ? ds.filter(x => x !== d) : ds) : [...ds, d])
 
   return (
-    <Sheet open={open} onClose={onClose} title="Custom repeat">
+    <Sheet open={open} onClose={onClose} title="Custom">
       <div className="form">
         <div className="field-row">
           <span className="label">Every</span>
@@ -90,7 +90,6 @@ function CustomRepeat({ open, base, value, onClose, onDone }: {
             ))}
           </div>
         )}
-        {unit === 'monthly' && <p className="muted small hint">On the {ordinal(base.getDate())} of the month</p>}
 
         <div className="label section-label">Ends</div>
         <div className="seg">

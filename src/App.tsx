@@ -10,6 +10,7 @@ import { Today } from './screens/Today'
 import { Goals } from './screens/Goals'
 import { AreaGoals } from './screens/AreaGoals'
 import { TabBar } from './components/TabBar'
+import { Sidebar } from './components/Sidebar'
 import { Toast } from './components/Toast'
 import { Sheet } from './components/Sheet'
 import type { AreaId } from './lib/types'
@@ -52,7 +53,7 @@ export default function App() {
 
   return (
     <StoreProvider key={userKey} backend={backend}>
-      <Shell email={session?.user.email ?? 'Demo — saved on this device only'} onSignOut={signOut} />
+      <Shell email={session?.user.email ?? 'Demo'} onSignOut={signOut} />
     </StoreProvider>
   )
 }
@@ -63,16 +64,16 @@ function Shell({ email, onSignOut }: { email: string; onSignOut(): void }) {
   const openAccount = () => setAccount(true)
   return (
     <div className="app">
-      {route.tab === 'today' && <Today onAccount={openAccount} />}
-      {route.tab === 'goals' && !route.area && <Goals onAccount={openAccount} />}
-      {route.tab === 'goals' && route.area && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
+      <Sidebar route={route} email={email} onAccount={openAccount} />
+      <div className="main">
+        {route.tab === 'today' && <Today onAccount={openAccount} />}
+        {route.tab === 'goals' && !route.area && <Goals onAccount={openAccount} />}
+        {route.tab === 'goals' && route.area && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
+      </div>
       <TabBar tab={route.tab} />
       <Toast />
-      <Sheet open={account} onClose={() => setAccount(false)} title="Account">
-        <div className="form">
-          <p className="muted small">Signed in as</p>
-          <p>{email}</p>
-        </div>
+      <Sheet open={account} onClose={() => setAccount(false)}>
+        <p className="account-email">{email}</p>
         <div className="sheet-actions">
           <button className="btn ghost danger-text wide" onClick={() => { setAccount(false); onSignOut() }}>Sign out</button>
         </div>

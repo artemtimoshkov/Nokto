@@ -10,30 +10,23 @@ import type { Todo } from '../lib/types'
 
 export function Today({ onAccount }: { onAccount(): void }) {
   const { todos, loading } = useStore()
-  const sections = useMemo(() => groupTodos(todos), [todos])
+  const sections = useMemo(() => groupTodos(todos).filter(s => s.todos.length), [todos])
   const [sheet, setSheet] = useState<{ open: boolean; todo: Todo | null }>({ open: false, todo: null })
-  const count = sections.find(s => s.kind === 'today')!.todos.length + (sections.find(s => s.kind === 'overdue')?.todos.length ?? 0)
+  const add = () => setSheet({ open: true, todo: null })
 
   return (
     <main className="screen">
       <header className="head">
         <div>
           <h1>Today</h1>
-          <p className="sub">{format(today(), 'EEEE d MMMM')}{count ? ` · ${count} to do` : ''}</p>
+          <p className="sub">{format(today(), 'EEEE d MMMM')}</p>
         </div>
-        <button className="avatar" aria-label="Account" onClick={onAccount}><Icon d={I.user} size={18} /></button>
+        <button className="avatar mobile-only" aria-label="Account" onClick={onAccount}><Icon d={I.user} size={18} /></button>
       </header>
 
+      <button className="add-row desktop-only" onClick={add}><Icon d={I.plus} size={18} />Add task</button>
+
       {!loading && sections.map(s => {
-        if (s.kind === 'today' && !s.todos.length) {
-          return todos.length ? <p key="none-today" className="muted small quiet">Nothing due today.</p> : (
-            <div key="empty" className="empty">
-              <div className="empty-mark"><Icon d={I.star} size={28} /></div>
-              <p>A clear day.</p>
-              <p className="muted small">Tap + to add a to-do.</p>
-            </div>
-          )
-        }
         const title = s.kind === 'day' ? `${format(fromKey(s.key), 'd MMM')} · ${dayLabel(s.key)}` : s.title
         return (
           <section key={s.key} className="group">
@@ -48,9 +41,7 @@ export function Today({ onAccount }: { onAccount(): void }) {
         )
       })}
 
-      <button className="fab" aria-label="Add to-do" onClick={() => setSheet({ open: true, todo: null })}>
-        <Icon d={I.plus} size={26} />
-      </button>
+      <button className="fab mobile-only" aria-label="Add task" onClick={add}><Icon d={I.plus} size={26} /></button>
       <TodoSheet open={sheet.open} todo={sheet.todo} onClose={() => setSheet(s => ({ ...s, open: false }))} />
     </main>
   )

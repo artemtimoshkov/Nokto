@@ -3,7 +3,8 @@
 Your North Star goals and everyday to-dos in one minimal app. It installs on your phone from the web and syncs across every device through your account.
 
 - **Today**: Todoist-style to-dos with priority, area of life, date, time and repeats (daily, weekdays, weekly, monthly, quarterly, or custom with an end date).
-- **Bucket list**: life goals across 10 areas of life, pre-filled with placeholder goals you can edit.
+- **Bucket list**: life goals grouped by area of life. You start with 10 areas and can add, rename or delete them, and placeholder goals are pre-filled for you to edit.
+- **Search**: a search bar on Today and Bucket list (press `/` on a laptop).
 
 Stack: Vite + React + TypeScript, Supabase (auth + Postgres), and a PWA via `vite-plugin-pwa`, deployed on Vercel.
 

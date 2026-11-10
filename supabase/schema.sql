@@ -3,7 +3,7 @@
 create table if not exists public.goals (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
-  area text not null check (area in ('health','hobbies','work','business','friends','family','purpose','money','relationship','other')),
+  area text not null,
   title text not null,
   note text not null default '',
   done boolean not null default false,
@@ -16,7 +16,7 @@ create table if not exists public.todos (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   title text not null,
-  area text check (area in ('health','hobbies','work','business','friends','family','purpose','money','relationship','other')),
+  area text,
   priority smallint not null default 3 check (priority between 1 and 3),
   due_date date,
   due_time time,
@@ -61,6 +61,7 @@ end $$;
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
+  perform public.seed_areas(new.id);
   perform public.seed_goals(new.id);
   return new;
 end $$;
@@ -135,3 +136,44 @@ alter table public.todo_log enable row level security;
 drop policy if exists "own log" on public.todo_log;
 create policy "own log" on public.todo_log for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- Custom areas of life. Each account starts with the 10 defaults and can
+-- add, rename or delete them. goals.area / todos.area hold the area id.
+create table if not exists public.areas (
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  id text not null,
+  name text not null,
+  icon text not null default 'other',
+  position int not null default 0,
+  created_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
+alter table public.areas enable row level security;
+drop policy if exists "own areas" on public.areas;
+create policy "own areas" on public.areas for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Areas are no longer a fixed list.
+alter table public.goals drop constraint if exists goals_area_check;
+alter table public.todos drop constraint if exists todos_area_check;
+
+create or replace function public.seed_areas(uid uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.areas (user_id, id, name, icon, position) values
+    (uid,'health','Health','health',0),(uid,'hobbies','Hobbies','hobbies',1),(uid,'work','Work','work',2),
+    (uid,'business','Business','business',3),(uid,'friends','Friends','friends',4),(uid,'family','Family','family',5),
+    (uid,'purpose','Purpose','purpose',6),(uid,'money','Money','money',7),(uid,'relationship','Relationship','relationship',8),
+    (uid,'other','Other','other',9)
+  on conflict do nothing;
+end $$;
+
+-- Give existing accounts their areas (only those that have none yet).
+do $$
+declare u record;
+begin
+  for u in select id from auth.users where not exists (select 1 from public.areas a where a.user_id = auth.users.id) loop
+    perform public.seed_areas(u.id);
+  end loop;
+end $$;

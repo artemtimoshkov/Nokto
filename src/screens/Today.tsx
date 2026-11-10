@@ -7,10 +7,16 @@ import { TodoRow } from '../components/TodoRow'
 import { TodoSheet } from '../components/TodoSheet'
 import { Icon, I } from '../components/Icon'
 import type { Todo } from '../lib/types'
+import { SearchBar, matches } from '../components/SearchBar'
+import { compareTodos } from '../lib/sort'
 
 export function Today({ onAccount }: { onAccount(): void }) {
-  const { todos, loading } = useStore()
+  const { todos, loading, areaOf } = useStore()
+  const [q, setQ] = useState('')
   const sections = useMemo(() => groupTodos(todos).filter(s => s.todos.length), [todos])
+  const results = useMemo(() => q.trim()
+    ? todos.filter(t => !t.completed_at && !t.failed_at && (matches(t.title, q) || matches(areaOf(t.area)?.name ?? '', q))).sort(compareTodos)
+    : null, [q, todos, areaOf])
   const [sheet, setSheet] = useState<{ open: boolean; todo: Todo | null }>({ open: false, todo: null })
   const add = () => setSheet({ open: true, todo: null })
 
@@ -24,9 +30,16 @@ export function Today({ onAccount }: { onAccount(): void }) {
         <button className="avatar mobile-only" aria-label="Account" onClick={onAccount}><Icon d={I.user} size={18} /></button>
       </header>
 
-      <button className="add-row desktop-only" onClick={add}><Icon d={I.plus} size={18} />Add task</button>
+      {todos.length > 0 && <SearchBar value={q} onChange={setQ} />}
+      {!results && <button className="add-row desktop-only" onClick={add}><Icon d={I.plus} size={18} />Add task</button>}
 
-      {!loading && sections.map(s => {
+      {results && (
+        <ul className="todos results">
+          {results.map(t => <TodoRow key={t.id} todo={t} showDate onOpen={() => setSheet({ open: true, todo: t })} />)}
+        </ul>
+      )}
+
+      {!loading && !results && sections.map(s => {
         const title = s.kind === 'day' ? `${format(fromKey(s.key), 'd MMM')} · ${dayLabel(s.key)}` : s.title
         return (
           <section key={s.key} className="group">

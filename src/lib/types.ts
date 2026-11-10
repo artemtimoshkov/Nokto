@@ -1,6 +1,7 @@
-export type AreaId =
-  | 'health' | 'hobbies' | 'work' | 'business' | 'friends'
-  | 'family' | 'purpose' | 'money' | 'relationship' | 'other'
+/** Default areas use readable ids ('health'…); custom ones use a UUID. */
+export type AreaId = string
+
+export interface Area { id: AreaId; name: string; icon: string; position: number }
 
 export type Priority = 1 | 2 | 3
 

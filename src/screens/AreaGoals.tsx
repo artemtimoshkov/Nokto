@@ -1,43 +1,43 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '../lib/store'
-import { areaById } from '../data/areas'
+import { iconPath } from '../data/areas'
 import { Icon, I } from '../components/Icon'
-import { Check } from '../components/Check'
+import { GoalRow } from '../components/GoalRow'
 import { GoalSheet } from '../components/GoalSheet'
+import { AreaSheet } from '../components/AreaSheet'
+import { SearchBar, matches } from '../components/SearchBar'
 import type { AreaId, Goal } from '../lib/types'
 import { go } from '../lib/route'
 
 export function AreaGoals({ areaId }: { areaId: AreaId }) {
-  const { goals, toggleGoal } = useStore()
-  const area = areaById(areaId)
+  const { goals, areaOf, loading } = useStore()
+  const area = areaOf(areaId)
   const [sheet, setSheet] = useState<{ open: boolean; goal: Goal | null }>({ open: false, goal: null })
+  const [editArea, setEditArea] = useState(false)
   const [showDone, setShowDone] = useState(false)
-  if (!area) { go('/goals'); return null }
+  const [q, setQ] = useState('')
 
-  const mine = goals.filter(g => g.area === areaId).sort((a, b) => a.position - b.position || (a.created_at < b.created_at ? -1 : 1))
-  const open = mine.filter(g => !g.done)
-  const done = mine.filter(g => g.done)
+  const mine = useMemo(() => goals.filter(g => g.area === areaId)
+    .sort((a, b) => a.position - b.position || (a.created_at < b.created_at ? -1 : 1)), [goals, areaId])
+  if (!area) { if (!loading) go('/goals'); return null }
 
-  const row = (g: Goal) => (
-    <li key={g.id} className={`goal ${g.done ? 'done' : ''}`} onClick={() => setSheet({ open: true, goal: g })}>
-      <Check checked={g.done} priority={3} onToggle={() => toggleGoal(g)} label={`${g.done ? 'Reopen' : 'Achieve'} ${g.title}`} />
-      <div className="todo-body">
-        <div className="todo-title">{g.title}</div>
-        {g.note && <div className="todo-meta note">{g.note}</div>}
-      </div>
-    </li>
-  )
+  const shown = q.trim() ? mine.filter(g => matches(g.title, q) || matches(g.note, q)) : mine
+  const open = shown.filter(g => !g.done)
+  const done = shown.filter(g => g.done)
+  const row = (g: Goal) => <GoalRow key={g.id} goal={g} onOpen={() => setSheet({ open: true, goal: g })} />
 
   return (
     <main className="screen">
       <button className="back mobile-only" onClick={() => go('/goals')}><Icon d={I.back} size={18} />Bucket list</button>
       <header className="head">
         <div>
-          <div className="head-icon"><Icon d={area.icon} size={26} /></div>
+          <div className="head-icon"><Icon d={iconPath(area.icon)} size={26} /></div>
           <h1>{area.name}</h1>
-          {mine.length > 0 && <p className="sub">{done.length} / {mine.length}</p>}
+          {mine.length > 0 && <p className="sub">{mine.filter(g => g.done).length} / {mine.length}</p>}
         </div>
+        <button className="avatar" aria-label="Edit area" onClick={() => setEditArea(true)}><Icon d={I.more} size={20} /></button>
       </header>
+      {mine.length > 5 && <SearchBar value={q} onChange={setQ} />}
 
       <button className="add-row desktop-only" onClick={() => setSheet({ open: true, goal: null })}><Icon d={I.plus} size={18} />Add item</button>
       <ul className="todos">{open.map(row)}</ul>
@@ -45,9 +45,9 @@ export function AreaGoals({ areaId }: { areaId: AreaId }) {
       {!!done.length && (
         <section className="group">
           <button className="disclose" onClick={() => setShowDone(s => !s)}>
-            <Icon d={I.chevron} size={14} className={showDone ? 'rot' : ''} />Achieved <span className="muted">{done.length}</span>
+            <Icon d={I.chevron} size={14} className={showDone || q ? 'rot' : ''} />Achieved <span className="muted">{done.length}</span>
           </button>
-          {showDone && <ul className="todos">{done.map(row)}</ul>}
+          {(showDone || q) && <ul className="todos">{done.map(row)}</ul>}
         </section>
       )}
 
@@ -55,6 +55,7 @@ export function AreaGoals({ areaId }: { areaId: AreaId }) {
         <Icon d={I.plus} size={26} />
       </button>
       <GoalSheet open={sheet.open} area={areaId} goal={sheet.goal} onClose={() => setSheet(s => ({ ...s, open: false }))} />
+      <AreaSheet open={editArea} area={area} onClose={() => setEditArea(false)} />
     </main>
   )
 }

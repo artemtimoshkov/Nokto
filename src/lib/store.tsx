@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Backend } from './backend'
-import type { AreaId, Goal, Todo } from './types'
+import type { Area, AreaId, Goal, Todo } from './types'
 import { nextDue } from './recurrence'
 import { dayLabel } from './dates'
 
@@ -8,6 +8,11 @@ export type TodoDraft = Omit<Todo, 'id' | 'created_at' | 'completed_at' | 'faile
 interface Toast { id: number; text: string; undo?: () => void }
 
 interface Store {
+  areas: Area[]
+  areaOf(id: AreaId | null | undefined): Area | undefined
+  addArea(name: string, icon: string): string
+  saveArea(id: AreaId, patch: Partial<Area>): void
+  deleteArea(id: AreaId): void
   goals: Goal[]
   todos: Todo[]
   loading: boolean
@@ -30,6 +35,7 @@ export const useStore = () => useContext(Ctx)!
 const tmpId = () => 'tmp-' + Math.random().toString(36).slice(2)
 
 export function StoreProvider({ backend, children }: { backend: Backend; children: ReactNode }) {
+  const [areas, setAreas] = useState<Area[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [todos, setTodos] = useState<Todo[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,8 +50,8 @@ export function StoreProvider({ backend, children }: { backend: Backend; childre
 
   const refresh = useCallback(async () => {
     try {
-      const [g, t] = await Promise.all([backend.listGoals(), backend.listTodos()])
-      setGoals(g); setTodos(t)
+      const [a, g, t] = await Promise.all([backend.listAreas(), backend.listGoals(), backend.listTodos()])
+      setAreas(a); setGoals(g); setTodos(t)
     } catch (e) {
       console.error(e)
     } finally { setLoading(false) }
@@ -86,7 +92,25 @@ export function StoreProvider({ backend, children }: { backend: Backend; childre
   }
 
   const store = useMemo<Store>(() => ({
-    goals, todos, loading, toast,
+    areas, goals, todos, loading, toast,
+    areaOf: id => (id ? areas.find(a => a.id === id) : undefined),
+    addArea(name, icon) {
+      const id = crypto.randomUUID?.() ?? tmpId()
+      const a: Area = { id, name, icon, position: areas.reduce((m, x) => Math.max(m, x.position), -1) + 1 }
+      setAreas(as => [...as, a])
+      backend.insertArea(a).catch(fail)
+      return id
+    },
+    saveArea(id, patch) {
+      setAreas(as => as.map(a => a.id === id ? { ...a, ...patch } : a))
+      backend.updateArea(id, patch).catch(fail)
+    },
+    deleteArea(id) {
+      setAreas(as => as.filter(a => a.id !== id))
+      setGoals(gs => gs.filter(g => g.area !== id))
+      setTodos(ts => ts.map(t => t.area === id ? { ...t, area: null } : t))
+      backend.deleteArea(id).catch(fail)
+    },
     dismissToast: () => setToast(null),
 
     addTodo(d) {
@@ -132,7 +156,7 @@ export function StoreProvider({ backend, children }: { backend: Backend; childre
       backend.deleteGoal(id).catch(fail)
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [goals, todos, loading, toast, backend, fail, show])
+  }), [areas, goals, todos, loading, toast, backend, fail, show])
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
 }

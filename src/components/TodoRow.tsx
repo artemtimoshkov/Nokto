@@ -2,20 +2,19 @@ import { useRef, useState } from 'react'
 import type { Todo } from '../lib/types'
 import { Check } from './Check'
 import { Icon, I } from './Icon'
-import { areaById } from '../data/areas'
 import { dayLabel, timeLabel } from '../lib/dates'
 import { useStore } from '../lib/store'
 
 const THRESHOLD = 88 // px to swipe left before it counts as "missed"
 
 export function TodoRow({ todo, showDate, overdue, onOpen }: { todo: Todo; showDate: boolean; overdue?: boolean; onOpen(): void }) {
-  const { completeTodo, missTodo } = useStore()
+  const { completeTodo, missTodo, areaOf } = useStore()
   const [dx, setDx] = useState(0)
   const [missing, setMissing] = useState(false)
   const start = useRef<{ x: number; y: number; horiz: boolean | null } | null>(null)
   const swiped = useRef(false)
 
-  const area = areaById(todo.area)
+  const area = areaOf(todo.area)
   const when = [showDate && todo.due_date ? dayLabel(todo.due_date) : null, todo.due_time ? timeLabel(todo.due_time) : null].filter(Boolean).join(' ')
   const hasMeta = when || todo.recurrence || area
 

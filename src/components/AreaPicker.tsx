@@ -1,11 +1,13 @@
-import { AREAS } from '../data/areas'
 import type { AreaId } from '../lib/types'
+import { useStore } from '../lib/store'
+import { iconPath } from '../data/areas'
 import { Sheet } from './Sheet'
 import { Icon, I } from './Icon'
 
 export function AreaPicker({ open, value, onChange, onClose }: {
   open: boolean; value: AreaId | null; onChange(a: AreaId | null): void; onClose(): void
 }) {
+  const { areas } = useStore()
   const pick = (a: AreaId | null) => { onChange(a); onClose() }
   return (
     <Sheet open={open} onClose={onClose} title="Area">
@@ -14,9 +16,9 @@ export function AreaPicker({ open, value, onChange, onClose }: {
           <Icon d={I.none} className="muted" /><span className="grow">No area</span>
           {value === null && <Icon d={I.check} className="accent" />}
         </button>
-        {AREAS.map(a => (
+        {areas.map(a => (
           <button key={a.id} className="row" onClick={() => pick(a.id)}>
-            <Icon d={a.icon} /><span className="grow">{a.name}</span>
+            <Icon d={iconPath(a.icon)} /><span className="grow">{a.name}</span>
             {value === a.id && <Icon d={I.check} className="accent" />}
           </button>
         ))}

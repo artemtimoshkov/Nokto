@@ -1,9 +1,13 @@
-import type { Goal, LogEntry, Todo } from './types'
+import type { Area, Goal, LogEntry, Todo } from './types'
 import { supabase } from './supabase'
-import { SEED } from '../data/areas'
-import type { AreaId } from './types'
+import { DEFAULT_AREAS, SEED } from '../data/areas'
 
 export interface Backend {
+  listAreas(): Promise<Area[]>
+  insertArea(a: Area): Promise<void>
+  updateArea(id: string, patch: Partial<Area>): Promise<void>
+  /** Deletes the area and its goals; tasks in it keep existing with no area. */
+  deleteArea(id: string): Promise<void>
   listGoals(): Promise<Goal[]>
   listTodos(): Promise<Todo[]>
   insertGoal(g: Omit<Goal, 'id' | 'created_at'>): Promise<Goal>
@@ -26,6 +30,19 @@ function check<T>(r: { data: T; error: any }): T {
 export const supabaseBackend = (): Backend => {
   const sb = supabase!
   return {
+    async listAreas() {
+      const r = await sb.from('areas').select('id,name,icon,position').order('position').order('created_at')
+      // Database not migrated yet (no areas table): use the defaults.
+      if (r.error) { console.warn('areas', r.error.message); return DEFAULT_AREAS }
+      return r.data as Area[]
+    },
+    async insertArea(a) { check(await sb.from('areas').insert(a)) },
+    async updateArea(id, patch) { check(await sb.from('areas').update(patch).eq('id', id)) },
+    async deleteArea(id) {
+      check(await sb.from('goals').delete().eq('area', id))
+      check(await sb.from('todos').update({ area: null }).eq('area', id))
+      check(await sb.from('areas').delete().eq('id', id))
+    },
     async listGoals() { return check(await sb.from('goals').select('*').order('position').order('created_at')) as Goal[] },
     async listTodos() {
       let r = await sb.from('todos').select('*').is('completed_at', null).is('failed_at', null)
@@ -48,19 +65,29 @@ export const supabaseBackend = (): Backend => {
 /** Demo mode: everything lives in this browser only. */
 export const localBackend = (): Backend => {
   const K = 'nokto-demo-v1'
-  type S = { goals: Goal[]; todos: Todo[]; log?: LogEntry[] }
+  type S = { goals: Goal[]; todos: Todo[]; log?: LogEntry[]; areas?: Area[] }
   const uid = () => (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2))
   const now = () => new Date().toISOString()
   const load = (): S => {
     try { const s = localStorage.getItem(K); if (s) return JSON.parse(s) } catch {}
-    const goals: Goal[] = (Object.keys(SEED) as AreaId[]).flatMap(area =>
+    const goals: Goal[] = Object.keys(SEED).flatMap(area =>
       SEED[area].map((title, position) => ({ id: uid(), area, title, note: '', done: false, done_at: null, position, created_at: now() })))
-    return { goals, todos: [] }
+    return { goals, todos: [], areas: DEFAULT_AREAS }
   }
   let s = load()
   const save = () => { try { localStorage.setItem(K, JSON.stringify(s)) } catch {} }
   save()
+  if (!s.areas) s.areas = DEFAULT_AREAS
   return {
+    async listAreas() { return [...s.areas!] },
+    async insertArea(a) { s.areas = [...s.areas!, a]; save() },
+    async updateArea(id, p) { s.areas = s.areas!.map(a => a.id === id ? { ...a, ...p } : a); save() },
+    async deleteArea(id) {
+      s.areas = s.areas!.filter(a => a.id !== id)
+      s.goals = s.goals.filter(g => g.area !== id)
+      s.todos = s.todos.map(t => t.area === id ? { ...t, area: null } : t)
+      save()
+    },
     async listGoals() { return [...s.goals] },
     async listTodos() { return s.todos.filter(t => !t.completed_at && !t.failed_at) },
     async insertGoal(g) { const x = { ...g, id: uid(), created_at: now() }; s.goals.push(x); save(); return x },

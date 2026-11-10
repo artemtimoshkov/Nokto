@@ -4,7 +4,7 @@ import { Icon, I } from './Icon'
 import { AreaPicker } from './AreaPicker'
 import { PriorityPicker } from './PriorityPicker'
 import { DatePicker, type When } from './DatePicker'
-import { areaById } from '../data/areas'
+import { iconPath } from '../data/areas'
 import type { AreaId, Priority, Todo } from '../lib/types'
 import { useStore } from '../lib/store'
 import { dayLabel, timeLabel } from '../lib/dates'
@@ -44,7 +44,7 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
     }
   }
 
-  const a = areaById(area)
+  const a = store.areaOf(area)
   const dateText = when.date ? dayLabel(when.date) + (when.time ? ' ' + timeLabel(when.time) : '') : 'Date'
 
   return (
@@ -63,7 +63,7 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
             <Icon d={I.flag} size={16} fill={!!priority && priority < 3} />{priority ? `P${priority}` : 'Priority'}
           </button>
           <button className={`chip ${a ? 'set' : ''}`} onClick={() => setPanel('area')}>
-            <Icon d={a?.icon ?? I.tag} size={16} />{a?.name ?? 'Area'}
+            <Icon d={a ? iconPath(a.icon) : I.tag} size={16} />{a?.name ?? 'Area'}
           </button>
         </div>
         <div className="sheet-foot">

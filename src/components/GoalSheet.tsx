@@ -3,7 +3,6 @@ import { Sheet } from './Sheet'
 import { Icon, I } from './Icon'
 import type { AreaId, Goal } from '../lib/types'
 import { useStore } from '../lib/store'
-import { areaById } from '../data/areas'
 
 export function GoalSheet({ open, area, goal, onClose }: { open: boolean; area: AreaId; goal: Goal | null; onClose(): void }) {
   const store = useStore()
@@ -26,7 +25,7 @@ export function GoalSheet({ open, area, goal, onClose }: { open: boolean; area: 
 
   return (
     <Sheet open={open} onClose={onClose} className="todo-sheet">
-      <div className="sheet-kicker">{areaById(area)?.name}</div>
+      <div className="sheet-kicker">{store.areaOf(area)?.name}</div>
       <textarea ref={ref} className="title-input" rows={1} placeholder="Item" value={title}
         onChange={e => setTitle(e.target.value.replace(/\n/g, ''))}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />

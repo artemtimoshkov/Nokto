@@ -314,3 +314,16 @@ html.kb-open .sheet-handle { padding: 6px 0 2px; }
   .add-area .area-top { justify-content: center; gap: 10px; }
   .add-area .area-name { flex: none; font-weight: 500; }
 }
+
+/* ---------- Achieved (grey area) ---------- */
+.achieved-area { color: var(--text-2); background: var(--elev); border-radius: 12px; border-bottom: 0 !important; padding: 15px 14px !important; margin: 14px 0 4px; }
+.achieved-area .area-icon { color: var(--text-3); }
+.achieved-area .area-name { font-weight: inherit; }
+.head-icon.muted { color: var(--text-3); }
+.side-achieved { color: var(--text-2) !important; }
+@media (min-width: 900px) {
+  .achieved-area { background: var(--elev); border-color: transparent !important; margin: 0; padding: 18px !important; border-radius: 14px; }
+  .achieved-area .area-name { font-weight: 600; }
+  .achieved-area:hover { border-color: var(--line) !important; }
+  .achieved-area .area-preview span { text-decoration: line-through; text-decoration-color: var(--text-3); }
+}

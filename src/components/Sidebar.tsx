@@ -32,6 +32,10 @@ export function Sidebar({ route, email, onAccount }: { route: Route; email: stri
             </button>
           )
         })}
+        <button className={`side-achieved ${area === 'achieved' ? 'active' : ''}`} onClick={() => go('/goals/achieved')}>
+          <Icon d={I.trophy} size={17} /><span className="grow">Achieved</span>
+          {goals.some(g => g.done) && <span className="side-count">{goals.filter(g => g.done).length}</span>}
+        </button>
         <button className="side-add" onClick={() => setAdding(true)}><Icon d={I.plus} size={17} /><span className="grow">Add area</span></button>
       </nav>
       <AreaSheet open={adding} area={null} onClose={() => setAdding(false)} />

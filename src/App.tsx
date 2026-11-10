@@ -9,6 +9,7 @@ import { handleAuthRedirect } from './lib/handoff'
 import { Today } from './screens/Today'
 import { Goals } from './screens/Goals'
 import { AreaGoals } from './screens/AreaGoals'
+import { Achieved } from './screens/Achieved'
 import { TabBar } from './components/TabBar'
 import { Sidebar } from './components/Sidebar'
 import { Toast } from './components/Toast'
@@ -68,7 +69,8 @@ function Shell({ email, onSignOut }: { email: string; onSignOut(): void }) {
       <div className="main">
         {route.tab === 'today' && <Today onAccount={openAccount} />}
         {route.tab === 'goals' && !route.area && <Goals onAccount={openAccount} />}
-        {route.tab === 'goals' && route.area && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
+        {route.tab === 'goals' && route.area === 'achieved' && <Achieved />}
+        {route.tab === 'goals' && route.area && route.area !== 'achieved' && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
       </div>
       <TabBar tab={route.tab} />
       <Toast />

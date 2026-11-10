@@ -66,6 +66,21 @@ export function Goals({ onAccount }: { onAccount(): void }) {
               )
             })}
             <li>
+              <button className="area-row achieved-area" onClick={() => go('/goals/achieved')}>
+                <span className="area-top">
+                  <span className="area-icon"><Icon d={I.trophy} size={22} /></span>
+                  <span className="grow area-name">Achieved</span>
+                  <span className="count">{done || ''}</span>
+                  <Icon d={I.chevron} size={16} className="muted mobile-only" />
+                </span>
+                {done > 0 && (
+                  <span className="area-preview desktop-only">
+                    {goals.filter(g => g.done).sort((a, b) => (b.done_at ?? '').localeCompare(a.done_at ?? '')).slice(0, 4).map(g => <span key={g.id}>{g.title}</span>)}
+                  </span>
+                )}
+              </button>
+            </li>
+            <li>
               <button className="area-row add-area" onClick={() => setAddArea(true)}>
                 <span className="area-top">
                   <span className="area-icon"><Icon d={I.plus} size={22} /></span>

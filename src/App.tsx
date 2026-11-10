@@ -1,0 +1,70 @@
+import { useEffect, useMemo, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from './lib/supabase'
+import { localBackend, supabaseBackend } from './lib/backend'
+import { StoreProvider } from './lib/store'
+import { useRoute } from './lib/route'
+import { Login } from './auth/Login'
+import { Today } from './screens/Today'
+import { Goals } from './screens/Goals'
+import { AreaGoals } from './screens/AreaGoals'
+import { TabBar } from './components/TabBar'
+import { Toast } from './components/Toast'
+import { Sheet } from './components/Sheet'
+import type { AreaId } from './lib/types'
+
+const DEMO_KEY = 'nokto-demo'
+
+export default function App() {
+  const [session, setSession] = useState<Session | null | undefined>(supabase ? undefined : null)
+  const [demo, setDemo] = useState(() => { try { return !supabase && localStorage.getItem(DEMO_KEY) === '1' } catch { return false } })
+
+  useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  const userKey = session?.user.id ?? (demo ? 'demo' : null)
+  const backend = useMemo(() => userKey === 'demo' ? localBackend() : userKey ? supabaseBackend() : null, [userKey])
+
+  if (session === undefined) return <div className="splash" />
+  if (!backend) return <Login onDemo={() => { try { localStorage.setItem(DEMO_KEY, '1') } catch {} setDemo(true) }} />
+
+  const signOut = async () => {
+    if (supabase) await supabase.auth.signOut()
+    try { localStorage.removeItem(DEMO_KEY) } catch {}
+    setDemo(false)
+  }
+
+  return (
+    <StoreProvider key={userKey} backend={backend}>
+      <Shell email={session?.user.email ?? 'Demo — saved on this device only'} onSignOut={signOut} />
+    </StoreProvider>
+  )
+}
+
+function Shell({ email, onSignOut }: { email: string; onSignOut(): void }) {
+  const route = useRoute()
+  const [account, setAccount] = useState(false)
+  const openAccount = () => setAccount(true)
+  return (
+    <div className="app">
+      {route.tab === 'today' && <Today onAccount={openAccount} />}
+      {route.tab === 'goals' && !route.area && <Goals onAccount={openAccount} />}
+      {route.tab === 'goals' && route.area && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
+      <TabBar tab={route.tab} />
+      <Toast />
+      <Sheet open={account} onClose={() => setAccount(false)} title="Account">
+        <div className="form">
+          <p className="muted small">Signed in as</p>
+          <p>{email}</p>
+        </div>
+        <div className="sheet-actions">
+          <button className="btn ghost danger-text wide" onClick={() => { setAccount(false); onSignOut() }}>Sign out</button>
+        </div>
+      </Sheet>
+    </div>
+  )
+}

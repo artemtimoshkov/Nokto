@@ -1,6 +1,8 @@
 import type { Area, Goal, LogEntry, Todo } from './types'
 import { supabase } from './supabase'
+import { uuid } from './uuid'
 import { DEFAULT_AREAS, SEED } from '../data/areas'
+import { isTransient, withOutbox, type Synced } from './outbox'
 
 export interface Backend {
   listAreas(): Promise<Area[]>
@@ -10,10 +12,10 @@ export interface Backend {
   deleteArea(id: string): Promise<void>
   listGoals(): Promise<Goal[]>
   listTodos(): Promise<Todo[]>
-  insertGoal(g: Omit<Goal, 'id' | 'created_at'>): Promise<Goal>
+  insertGoal(g: Goal): Promise<void>
   updateGoal(id: string, patch: Partial<Goal>): Promise<void>
   deleteGoal(id: string): Promise<void>
-  insertTodo(t: Omit<Todo, 'id' | 'created_at'>): Promise<Todo>
+  insertTodo(t: Todo): Promise<void>
   updateTodo(id: string, patch: Partial<Todo>): Promise<void>
   deleteTodo(id: string): Promise<void>
   log(e: LogEntry): Promise<void>
@@ -25,6 +27,13 @@ const normTodo = (t: any): Todo => ({ ...t, due_time: t.due_time ? String(t.due_
 function check<T>(r: { data: T; error: any }): T {
   if (r.error) throw r.error
   return r.data
+}
+
+/** Retry when offline, but otherwise don't let history get in the way. */
+function soft(r: { error: any }) {
+  if (!r.error) return
+  if (isTransient(r.error)) throw r.error
+  console.warn('todo_log', r.error.message)
 }
 
 export const supabaseBackend = (): Backend => {
@@ -50,23 +59,27 @@ export const supabaseBackend = (): Backend => {
       if (r.error?.code === '42703') r = await sb.from('todos').select('*').is('completed_at', null)
       return (check(r) as any[]).map(normTodo)
     },
-    async insertGoal(g) { return check(await sb.from('goals').insert(g).select().single()) as Goal },
+    async insertGoal(g) { check(await sb.from('goals').insert(g)) },
     async updateGoal(id, patch) { check(await sb.from('goals').update(patch).eq('id', id)) },
     async deleteGoal(id) { check(await sb.from('goals').delete().eq('id', id)) },
-    async insertTodo(t) { return normTodo(check(await sb.from('todos').insert(t).select().single())) },
+    async insertTodo(t) { check(await sb.from('todos').insert(t)) },
     async updateTodo(id, patch) { check(await sb.from('todos').update(patch).eq('id', id)) },
     async deleteTodo(id) { check(await sb.from('todos').delete().eq('id', id)) },
     // History is best-effort: never let it break completing a task.
-    async log(e) { const { error } = await sb.from('todo_log').insert(e); if (error) console.warn('todo_log', error.message) },
-    async unlog(id) { await sb.from('todo_log').delete().eq('id', id) },
+    async log(e) { soft(await sb.from('todo_log').insert(e)) },
+    async unlog(id) { soft(await sb.from('todo_log').delete().eq('id', id)) },
   }
 }
+
+/** Supabase behind the offline outbox: reads go to the server, changes queue on the device. */
+export const syncedBackend = (userId: string): Backend & Synced =>
+  withOutbox(supabaseBackend(), `core:${userId}`, ['listAreas', 'listGoals', 'listTodos'])
 
 /** Demo mode: everything lives in this browser only. */
 export const localBackend = (): Backend => {
   const K = 'nokto-demo-v1'
   type S = { goals: Goal[]; todos: Todo[]; log?: LogEntry[]; areas?: Area[] }
-  const uid = () => (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2))
+  const uid = uuid
   const now = () => new Date().toISOString()
   const load = (): S => {
     try { const s = localStorage.getItem(K); if (s) return JSON.parse(s) } catch {}
@@ -90,10 +103,10 @@ export const localBackend = (): Backend => {
     },
     async listGoals() { return [...s.goals] },
     async listTodos() { return s.todos.filter(t => !t.completed_at && !t.failed_at) },
-    async insertGoal(g) { const x = { ...g, id: uid(), created_at: now() }; s.goals.push(x); save(); return x },
+    async insertGoal(g) { s.goals.push(g); save() },
     async updateGoal(id, p) { s.goals = s.goals.map(g => g.id === id ? { ...g, ...p } : g); save() },
     async deleteGoal(id) { s.goals = s.goals.filter(g => g.id !== id); save() },
-    async insertTodo(t) { const x = { ...t, id: uid(), created_at: now() }; s.todos.push(x); save(); return x },
+    async insertTodo(t) { s.todos.push(t); save() },
     async updateTodo(id, p) { s.todos = s.todos.map(t => t.id === id ? { ...t, ...p } : t); save() },
     async deleteTodo(id) { s.todos = s.todos.filter(t => t.id !== id); save() },
     async log(e) { s.log = [...(s.log ?? []), e]; save() },

@@ -201,6 +201,9 @@ create table if not exists public.friends (
   last_contact date,
   created_at timestamptz not null default now()
 );
+-- Social profiles (URL or username), added later.
+alter table public.friends add column if not exists linkedin text not null default '';
+alter table public.friends add column if not exists instagram text not null default '';
 create index if not exists friends_user_idx on public.friends(user_id);
 alter table public.friends enable row level security;
 drop policy if exists "own friends" on public.friends;

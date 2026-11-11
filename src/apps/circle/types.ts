@@ -23,6 +23,10 @@ export interface Friend {
   work: string
   partner: string
   how_we_met: string
+  /** Profile URL or username. */
+  linkedin: string
+  /** Profile URL or @username. */
+  instagram: string
   siblings: Sibling[]
   about: string
   /** yyyy-MM-dd: the last time you talked or met. */
@@ -43,6 +47,6 @@ export type FriendDraft = Omit<Friend, 'id' | 'created_at'>
 
 export const emptyFriend = (): FriendDraft => ({
   name: '', closeness: 'good', photo: null, birth_month: null, birth_day: null, birth_year: null,
-  grew_up: '', nationality: '', lives_in: '', work: '', partner: '', how_we_met: '',
+  grew_up: '', nationality: '', lives_in: '', work: '', partner: '', how_we_met: '', linkedin: '', instagram: '',
   siblings: [], about: '', last_contact: null,
 })

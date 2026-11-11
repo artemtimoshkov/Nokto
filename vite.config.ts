@@ -23,7 +23,8 @@ export default defineConfig({
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
-      workbox: { navigateFallbackDenylist: [/^\/auth/] }
+      // Precache the whole app (Circle's lazy chunk and the icons too) so it opens with no connection.
+      workbox: { navigateFallbackDenylist: [/^\/auth/], globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'] }
     })
   ],
   test: { environment: 'node' }

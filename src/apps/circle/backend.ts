@@ -1,4 +1,6 @@
 import { supabase } from '../../lib/supabase'
+import { withOutbox, type Synced } from '../../lib/outbox'
+import { uuid } from '../../lib/uuid'
 import { emptyFriend, type Friend, type FriendNote } from './types'
 
 export interface CircleData { friends: Friend[]; notes: FriendNote[] }
@@ -17,14 +19,7 @@ export interface CircleBackend {
   deleteNote(id: string): Promise<void>
 }
 
-/** A v4 UUID made on the device, so new rows can be shown before the server answers. */
-export function uuid(): string {
-  if (crypto.randomUUID) return crypto.randomUUID()
-  const b = crypto.getRandomValues(new Uint8Array(16))
-  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80
-  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('')
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
-}
+export { uuid }
 
 function check(r: { error: any }) { if (r.error) throw r.error }
 const missingTable = (e: any) => e?.code === '42P01' || e?.code === 'PGRST205'
@@ -41,13 +36,30 @@ export const supabaseCircle = (): CircleBackend => {
       check(f); check(n)
       return { friends: (f.data as any[]).map(normFriend), notes: (n.data as any[]).map(normNote) }
     },
-    async insertFriend({ created_at: _c, ...f }) { check(await sb.from('friends').insert(f)) },
-    async updateFriend(id, patch) { check(await sb.from('friends').update(patch).eq('id', id)) },
+    async insertFriend({ created_at: _c, ...f }) { await withoutMissingSocial(f, row => sb.from('friends').insert(row)) },
+    async updateFriend(id, patch) { await withoutMissingSocial(patch, row => sb.from('friends').update(row).eq('id', id)) },
     async deleteFriend(id) { check(await sb.from('friends').delete().eq('id', id)) }, // notes cascade
     async insertNote({ created_at: _c, ...n }) { check(await sb.from('friend_notes').insert(n)) },
     async updateNote(id, patch) { check(await sb.from('friend_notes').update(patch).eq('id', id)) },
     async deleteNote(id) { check(await sb.from('friend_notes').delete().eq('id', id)) },
   }
+}
+
+/** Supabase behind the offline outbox (see lib/outbox.ts). */
+export const syncedCircle = (userId: string): CircleBackend & Synced =>
+  withOutbox(supabaseCircle(), `circle:${userId}`, ['load'])
+
+/**
+ * The LinkedIn / Instagram columns came later. If the database hasn't been
+ * updated yet, save everything else rather than losing the whole change.
+ */
+async function withoutMissingSocial(row: Record<string, any>, run: (row: Record<string, any>) => PromiseLike<{ error: any }>) {
+  const r = await run(row)
+  const missing = r.error && (r.error.code === 'PGRST204' || r.error.code === '42703') && /linkedin|instagram/.test(r.error.message ?? '')
+  if (!missing) return check(r)
+  const { linkedin: _l, instagram: _i, ...rest } = row
+  console.warn('Run supabase/schema.sql to save LinkedIn and Instagram.')
+  if (Object.keys(rest).length) check(await run(rest))
 }
 
 const normFriend = (f: any): Friend => {
@@ -64,6 +76,7 @@ export const localCircle = (): CircleBackend => {
   const K = 'nokto-demo-circle-v1'
   let s: CircleData
   try { s = JSON.parse(localStorage.getItem(K) ?? '') } catch { s = demoSeed() }
+  s.friends = s.friends.map(f => ({ ...emptyFriend(), ...f })) // fields added since this was saved
   const save = () => { try { localStorage.setItem(K, JSON.stringify(s)) } catch {} }
   save()
   return {
@@ -86,14 +99,14 @@ function demoSeed(): CircleData {
     ...emptyFriend(), id: uuid(), created_at, name: 'Maya Lindqvist', closeness: 'best',
     birth_month: soon.getMonth() + 1, birth_day: soon.getDate(), birth_year: 1993,
     grew_up: 'Gothenburg, Sweden', nationality: 'Swedish', lives_in: 'Lisbon', work: 'Product designer',
-    partner: 'Tom', how_we_met: 'Flatmates in university',
+    partner: 'Tom', how_we_met: 'Flatmates in university', instagram: 'maya.climbs',
     siblings: [{ name: 'Erik', note: 'Older brother, doctor' }, { name: 'Linn', note: 'Younger sister' }],
     about: 'Loves climbing and natural wine. Moved to Lisbon in 2022.', last_contact: ago(12),
   }
   const sam: Friend = {
     ...emptyFriend(), id: uuid(), created_at, name: 'Sam Okafor', closeness: 'good',
     birth_month: 3, birth_day: 14, grew_up: 'Lagos', nationality: 'Nigerian, British', lives_in: 'London',
-    work: 'Runs a coffee roastery', how_we_met: 'Friend of Maya', last_contact: ago(95),
+    work: 'Runs a coffee roastery', how_we_met: 'Friend of Maya', linkedin: 'samokafor', last_contact: ago(95),
   }
   return {
     friends: [maya, sam],

@@ -177,3 +177,46 @@ begin
     perform public.seed_areas(u.id);
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Mini app: Circle (friends CRM). Friends with their details, and dated notes
+-- about what you talked about. Photos are small JPEG data URLs on the row.
+create table if not exists public.friends (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null,
+  closeness text not null default 'good' check (closeness in ('best', 'good', 'acquaintance')),
+  photo text,
+  birth_month smallint check (birth_month between 1 and 12),
+  birth_day smallint check (birth_day between 1 and 31),
+  birth_year smallint,
+  grew_up text not null default '',
+  nationality text not null default '',
+  lives_in text not null default '',
+  work text not null default '',
+  partner text not null default '',
+  how_we_met text not null default '',
+  siblings jsonb not null default '[]',
+  about text not null default '',
+  last_contact date,
+  created_at timestamptz not null default now()
+);
+create index if not exists friends_user_idx on public.friends(user_id);
+alter table public.friends enable row level security;
+drop policy if exists "own friends" on public.friends;
+create policy "own friends" on public.friends for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create table if not exists public.friend_notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  friend_id uuid not null references public.friends(id) on delete cascade,
+  body text not null,
+  date date not null default current_date,
+  created_at timestamptz not null default now()
+);
+create index if not exists friend_notes_user_idx on public.friend_notes(user_id, friend_id);
+alter table public.friend_notes enable row level security;
+drop policy if exists "own friend notes" on public.friend_notes;
+create policy "own friend notes" on public.friend_notes for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());

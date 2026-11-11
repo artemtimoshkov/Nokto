@@ -18,6 +18,8 @@ interface Store {
   loading: boolean
   toast: Toast | null
   dismissToast(): void
+  /** Show a toast (optionally with Undo). Mini apps use this too. */
+  notify(text: string, undo?: () => void): void
   addTodo(d: TodoDraft): void
   saveTodo(id: string, patch: Partial<Todo>): void
   completeTodo(t: Todo): void
@@ -112,6 +114,7 @@ export function StoreProvider({ backend, children }: { backend: Backend; childre
       backend.deleteArea(id).catch(fail)
     },
     dismissToast: () => setToast(null),
+    notify: show,
 
     addTodo(d) {
       const id = tmpId()

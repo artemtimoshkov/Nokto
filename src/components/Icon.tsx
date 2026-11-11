@@ -22,6 +22,7 @@ export const I = {
   search: 'M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14z M20 20l-4-4',
   more: 'M5 12h.01 M12 12h.01 M19 12h.01',
   trophy: 'M8 4h8v5a4 4 0 0 1-8 0z M8 6H5a3 3 0 0 0 3 4 M16 6h3a3 3 0 0 1-3 4 M12 13v4 M8 20h8 M10 17h4',
+  apps: 'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
   missed: 'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M9 9l6 6 M15 9l-6 6',
 }
 

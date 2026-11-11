@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useStore } from '../../lib/store'
 import { toKey, today } from '../../lib/dates'
-import { NotSetUp, uuid, type CircleBackend } from './backend'
+import { readCache, writeCache } from '../../lib/cache'
+import type { Synced } from '../../lib/outbox'
+import { NotSetUp, uuid, type CircleBackend, type CircleData } from './backend'
+import { emptyFriend } from './types'
 import type { Friend, FriendDraft, FriendNote } from './types'
 
 interface Circle {
@@ -28,23 +31,40 @@ export const useCircle = () => useContext(Ctx)!
 const byDate = (a: FriendNote, b: FriendNote) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)
 const later = (a: string | null, b: string) => (!a || b > a ? b : a)
 
-export function CircleProvider({ backend, children }: { backend: CircleBackend; children: ReactNode }) {
+/** Same offline model as the main store: open from the device copy, replace it from the server once nothing is queued. */
+export function CircleProvider({ backend, cacheKey, children }: { backend: CircleBackend & Partial<Synced>; cacheKey?: string; children: ReactNode }) {
   const { notify } = useStore()
-  const [friends, setFriends] = useState<Friend[]>([])
-  const [notes, setNotes] = useState<FriendNote[]>([])
-  const [loading, setLoading] = useState(true)
+  const [cached] = useState(() => readCache<CircleData>(cacheKey))
+  const [friends, setFriends] = useState<Friend[]>(() => (cached?.friends ?? []).map(f => ({ ...emptyFriend(), ...f })))
+  const [notes, setNotes] = useState<FriendNote[]>(cached?.notes ?? [])
+  const [loading, setLoading] = useState(!cached)
   const [notSetUp, setNotSetUp] = useState(false)
 
   const refresh = useCallback(async () => {
     try {
+      if (navigator.onLine === false) return
+      if (backend.flush && !(await backend.flush())) return
+      const v = backend.version?.()
       const d = await backend.load()
+      if (backend.version && (backend.version() !== v || backend.pending!() > 0)) return
       setFriends(d.friends); setNotes(d.notes); setNotSetUp(false)
     } catch (e) {
       if (e instanceof NotSetUp) setNotSetUp(true)
       else console.error(e)
     } finally { setLoading(false) }
   }, [backend])
-  useEffect(() => { refresh() }, [refresh])
+
+  useEffect(() => {
+    if (!loading && !notSetUp) writeCache(cacheKey, { friends, notes })
+  }, [cacheKey, friends, notes, loading, notSetUp])
+
+  useEffect(() => {
+    refresh()
+    const onVis = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener('online', onVis)
+    return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('online', onVis) }
+  }, [refresh])
 
   const fail = useCallback((e: unknown) => { console.error(e); notify("Couldn't sync. Retrying…"); refresh() }, [notify, refresh])
 

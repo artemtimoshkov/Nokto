@@ -30,6 +30,7 @@
 .c-facts svg { color: var(--text-3); flex: none; margin-top: 1px; }
 .c-fact-label { color: var(--text-2); width: 104px; flex: none; }
 .c-fact-value { flex: 1; min-width: 0; word-wrap: break-word; }
+.c-social { color: var(--red); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .c-sib { display: block; }
 .c-sib + .c-sib { margin-top: 3px; }
 .c-about { white-space: pre-wrap; font-size: 15px; line-height: 1.5; color: var(--text); margin: 14px 0 0; }

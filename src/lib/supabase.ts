@@ -11,3 +11,13 @@ export const supabase: SupabaseClient | null = url && key
       auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'nokto-auth' },
     })
   : null
+
+export interface SignedInUser { id: string; email?: string }
+
+/** The user of the session saved on this device, without touching the network. */
+export function storedUser(): SignedInUser | null {
+  try {
+    const s = JSON.parse(localStorage.getItem('nokto-auth') ?? 'null')
+    return s?.user?.id ? { id: s.user.id, email: s.user.email } : null
+  } catch { return null }
+}

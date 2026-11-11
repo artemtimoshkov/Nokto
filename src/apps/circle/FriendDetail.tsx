@@ -10,6 +10,7 @@ import { NoteSheet } from './NoteSheet'
 import { CLOSENESS, type FriendNote } from './types'
 import { agoLabel, birthdayLabel, daysUntilBirthday, turningAge, untilLabel } from './dates'
 import { C } from './icons'
+import { instagramLink, linkedinLink } from './social'
 
 export function FriendDetail({ id }: { id: string }) {
   const circle = useCircle()
@@ -34,7 +35,11 @@ export function FriendDetail({ id }: { id: string }) {
     { icon: C.heart, label: 'Partner', value: f.partner },
     { icon: C.spark, label: 'How we met', value: f.how_we_met },
   ].filter(x => x.value.trim())
-  const empty = !facts.length && !f.siblings.length && !f.about.trim() && !hasBday
+  const socials = [
+    { icon: C.linkedin, label: 'LinkedIn', link: linkedinLink(f.linkedin) },
+    { icon: C.instagram, label: 'Instagram', link: instagramLink(f.instagram) },
+  ].filter(x => x.link)
+  const empty = !facts.length && !socials.length && !f.siblings.length && !f.about.trim() && !hasBday
   const addNote = () => setNote({ open: true, note: null })
 
   return (
@@ -70,10 +75,16 @@ export function FriendDetail({ id }: { id: string }) {
         </div>
       </div>
 
-      {(facts.length > 0 || f.siblings.length > 0) && (
+      {(facts.length > 0 || f.siblings.length > 0 || socials.length > 0) && (
         <ul className="c-facts">
           {facts.map(x => (
             <li key={x.label}><Icon d={x.icon} size={18} /><span className="c-fact-label">{x.label}</span><span className="c-fact-value">{x.value}</span></li>
+          ))}
+          {socials.map(x => (
+            <li key={x.label}>
+              <Icon d={x.icon} size={18} /><span className="c-fact-label">{x.label}</span>
+              <a className="c-fact-value c-social" href={x.link!.href} target="_blank" rel="noopener noreferrer">{x.link!.label}</a>
+            </li>
           ))}
           {f.siblings.length > 0 && (
             <li>

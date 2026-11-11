@@ -4,12 +4,12 @@ import { Icon, I } from '../components/Icon'
 import { go } from '../lib/route'
 
 /** `#/apps` shows the launcher; `#/apps/<id>/…` opens that mini app. */
-export function MiniApps({ path, demo, onAccount }: { path: string[]; demo: boolean; onAccount(): void }) {
+export function MiniApps({ path, demo, user, onAccount }: { path: string[]; demo: boolean; user: string; onAccount(): void }) {
   const app = MINI_APPS.find(a => a.id === path[0])
   if (app) {
     return (
       <Suspense fallback={<main className="screen" />}>
-        <app.Component demo={demo} path={path.slice(1)} />
+        <app.Component demo={demo} user={user} path={path.slice(1)} />
       </Suspense>
     )
   }
@@ -25,10 +25,7 @@ export function MiniApps({ path, demo, onAccount }: { path: string[]; demo: bool
             <button className="area-row app-row" onClick={() => go(`/apps/${a.id}`)}>
               <span className="area-top">
                 <span className="area-icon"><Icon d={a.icon} size={22} /></span>
-                <span className="grow">
-                  <span className="area-name">{a.name}</span>
-                  <span className="app-tagline">{a.tagline}</span>
-                </span>
+                <span className="area-name grow">{a.name}</span>
                 <Icon d={I.chevron} size={16} className="muted mobile-only" />
               </span>
             </button>

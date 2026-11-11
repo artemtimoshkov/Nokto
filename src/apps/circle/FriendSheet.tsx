@@ -11,13 +11,15 @@ import { C } from './icons'
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const DAYS_IN = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-const TEXT_FIELDS: { key: keyof FriendDraft & ('grew_up' | 'nationality' | 'lives_in' | 'work' | 'partner' | 'how_we_met'); label: string; placeholder: string }[] = [
+const TEXT_FIELDS: { key: keyof FriendDraft & ('grew_up' | 'nationality' | 'lives_in' | 'work' | 'partner' | 'how_we_met' | 'linkedin' | 'instagram'); label: string; placeholder: string }[] = [
   { key: 'grew_up', label: 'Grew up', placeholder: 'City, country' },
   { key: 'nationality', label: 'Nationality', placeholder: 'e.g. Ukrainian, Canadian' },
   { key: 'lives_in', label: 'Lives in', placeholder: 'City' },
   { key: 'work', label: 'Work', placeholder: 'What they do' },
   { key: 'partner', label: 'Partner', placeholder: 'Name' },
   { key: 'how_we_met', label: 'How we met', placeholder: 'Where, when, through whom' },
+  { key: 'linkedin', label: 'LinkedIn', placeholder: 'Profile link or username' },
+  { key: 'instagram', label: 'Instagram', placeholder: '@username' },
 ]
 
 /** Add (friend = null) or edit a friend. */
@@ -113,7 +115,8 @@ export function FriendSheet({ open, friend, onClose }: { open: boolean; friend: 
           {TEXT_FIELDS.map(f => (
             <label key={f.key} className="c-field">
               <span className="c-label">{f.label}</span>
-              <input className="c-input" placeholder={f.placeholder} value={d[f.key]} onChange={e => set(f.key, e.target.value)} />
+              <input className="c-input" placeholder={f.placeholder} value={d[f.key]} onChange={e => set(f.key, e.target.value)}
+                {...(f.key === 'linkedin' || f.key === 'instagram' ? { autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, inputMode: 'url' as const } : {})} />
             </label>
           ))}
 

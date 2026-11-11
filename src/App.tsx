@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase'
-import { localBackend, supabaseBackend } from './lib/backend'
+import { storedUser, supabase, type SignedInUser } from './lib/supabase'
+import { localBackend, syncedBackend } from './lib/backend'
+import { onDrop } from './lib/outbox'
+import { useStore } from './lib/store'
+import { SyncBadge } from './components/SyncBadge'
 import { StoreProvider } from './lib/store'
 import { useRoute } from './lib/route'
 import { Login, HandedOff } from './auth/Login'
@@ -20,7 +22,10 @@ import type { AreaId } from './lib/types'
 const DEMO_KEY = 'nokto-demo'
 
 export default function App() {
-  const [session, setSession] = useState<Session | null | undefined>(supabase ? undefined : null)
+  // Signed in = a session saved on this device. Offline, Supabase can't refresh an
+  // expired token, but the saved session is still ours, so the app opens anyway
+  // and syncs once it's back online.
+  const [user, setUser] = useState<SignedInUser | null | undefined>(() => supabase ? storedUser() ?? undefined : null)
   const [demo, setDemo] = useState(() => { try { return !supabase && localStorage.getItem(DEMO_KEY) === '1' } catch { return false } })
 
   const [handedOff, setHandedOff] = useState(false)
@@ -29,22 +34,23 @@ export default function App() {
   useEffect(() => {
     if (!supabase) return
     const sb = supabase
-    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s))
+    const pick = (u: SignedInUser | null | undefined) => setUser(u ? { id: u.id, email: u.email } : storedUser())
+    const { data } = sb.auth.onAuthStateChange((_e, s) => pick(s?.user))
     // Finish a sign-in from the email link (if any) before deciding what to show.
     handleAuthRedirect().then(async r => {
       if (r.result === 'handed-off') setHandedOff(true)
       if (r.result === 'error') setNotice(r.message)
       const { data: s } = await sb.auth.getSession()
-      setSession(s.session)
+      pick(s.session?.user)
     })
     return () => data.subscription.unsubscribe()
   }, [])
 
-  const userKey = session?.user.id ?? (demo ? 'demo' : null)
-  const backend = useMemo(() => userKey === 'demo' ? localBackend() : userKey ? supabaseBackend() : null, [userKey])
+  const userKey = user?.id ?? (demo ? 'demo' : null)
+  const backend = useMemo(() => userKey === 'demo' ? localBackend() : userKey ? syncedBackend(userKey) : null, [userKey])
 
-  if (session === undefined) return <div className="splash" />
-  if (handedOff && !session) return <HandedOff />
+  if (user === undefined) return <div className="splash" />
+  if (handedOff && !user) return <HandedOff />
   if (!backend) return <Login notice={notice} onDemo={() => { try { localStorage.setItem(DEMO_KEY, '1') } catch {} setDemo(true) }} />
 
   const signOut = async () => {
@@ -54,15 +60,17 @@ export default function App() {
   }
 
   return (
-    <StoreProvider key={userKey} backend={backend}>
-      <Shell email={session?.user.email ?? 'Demo'} demo={userKey === 'demo'} onSignOut={signOut} />
+    <StoreProvider key={userKey} backend={backend} cacheKey={userKey === 'demo' ? undefined : userKey!}>
+      <Shell email={user?.email ?? 'Demo'} userKey={userKey!} demo={userKey === 'demo'} onSignOut={signOut} />
     </StoreProvider>
   )
 }
 
-function Shell({ email, demo, onSignOut }: { email: string; demo: boolean; onSignOut(): void }) {
+function Shell({ email, userKey, demo, onSignOut }: { email: string; userKey: string; demo: boolean; onSignOut(): void }) {
   const route = useRoute()
+  const { notify } = useStore()
   const [account, setAccount] = useState(false)
+  useEffect(() => onDrop(() => notify("A change couldn't be saved")), [notify])
   const openAccount = () => setAccount(true)
   return (
     <div className="app">
@@ -72,10 +80,11 @@ function Shell({ email, demo, onSignOut }: { email: string; demo: boolean; onSig
         {route.tab === 'goals' && !route.area && <Goals onAccount={openAccount} />}
         {route.tab === 'goals' && route.area === 'achieved' && <Achieved />}
         {route.tab === 'goals' && route.area && route.area !== 'achieved' && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
-        {route.tab === 'apps' && <MiniApps path={route.path} demo={demo} onAccount={openAccount} />}
+        {route.tab === 'apps' && <MiniApps path={route.path} demo={demo} user={userKey} onAccount={openAccount} />}
       </div>
       <TabBar tab={route.tab} />
       <Toast />
+      <SyncBadge />
       <Sheet open={account} onClose={() => setAccount(false)}>
         <p className="account-email">{email}</p>
         <div className="sheet-actions">

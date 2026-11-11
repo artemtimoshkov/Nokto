@@ -1,0 +1,71 @@
+/* Circle (friends CRM). Loaded only when the mini app opens. */
+.c-avatar { flex: none; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-weight: 600; letter-spacing: .01em; background: var(--elev); }
+.c-friend { align-items: center; }
+.c-friend .todo-title { font-weight: 500; }
+.c-soon { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; flex: none; color: var(--red); }
+
+/* Birthdays soon */
+.c-bdays { list-style: none; margin: 6px -20px 0; padding: 4px 20px 2px; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+.c-bdays::-webkit-scrollbar { display: none; }
+.c-bday { width: 92px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 14px; background: var(--elev); }
+.c-bday.today { background: var(--red-soft); }
+.c-bday-name { max-width: 100%; font-size: 14px; font-weight: 500; }
+.c-bday-when { font-size: 12px; color: var(--text-2); }
+.c-bday.today .c-bday-when { color: var(--red); font-weight: 600; }
+
+/* Detail */
+.c-head { align-items: center; }
+.c-who { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.c-who h1 { font-size: 28px; word-break: break-word; }
+.c-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
+.c-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--elev); min-width: 0; }
+.c-tile.hot { background: var(--red-soft); }
+.c-tile-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--text-2); }
+.c-tile-value { font-size: 17px; font-weight: 600; text-align: left; }
+.c-tile-sub { font-size: 13px; color: var(--text-2); }
+.c-tile.hot .c-tile-sub { color: var(--red); font-weight: 600; }
+.c-tile-btn { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--red); }
+.c-facts { list-style: none; margin: 0; padding: 0; }
+.c-facts li { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 0.5px solid var(--line); font-size: 15px; }
+.c-facts svg { color: var(--text-3); flex: none; margin-top: 1px; }
+.c-fact-label { color: var(--text-2); width: 104px; flex: none; }
+.c-fact-value { flex: 1; min-width: 0; word-wrap: break-word; }
+.c-sib { display: block; }
+.c-sib + .c-sib { margin-top: 3px; }
+.c-about { white-space: pre-wrap; font-size: 15px; line-height: 1.5; color: var(--text); margin: 14px 0 0; }
+.c-note { cursor: pointer; }
+.c-note-date { font-size: 12px; color: var(--text-3); margin-bottom: 3px; }
+.c-note-body { font-size: 15px; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
+
+/* Sheets */
+.c-sheet { padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+.c-photo-row { display: flex; align-items: center; gap: 14px; padding-top: 6px; }
+.c-photo { position: relative; flex: none; border-radius: 50%; }
+.c-photo-empty { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--elev); color: var(--text-3); }
+.c-photo-badge { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--red); color: #fff; border: 2px solid var(--surface); }
+.c-link { color: var(--red); font-size: 14px; font-weight: 500; padding: 6px 0; align-self: flex-start; }
+.c-seg { margin: 12px 0 6px; }
+.c-seg button { font-size: 13px; }
+.c-form { display: flex; flex-direction: column; gap: 12px; padding: 8px 0 4px; }
+.c-field { display: flex; flex-direction: column; gap: 5px; }
+.c-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--text-2); }
+.c-input { height: 42px; border-radius: 10px; border: 0; background: var(--elev); padding: 0 12px; font-size: 16px; outline: none; min-width: 0; width: 100%; }
+.c-input:focus { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--red) 55%, transparent); }
+.c-input::placeholder { color: var(--text-3); }
+.c-input.bad { box-shadow: 0 0 0 1.5px var(--red); }
+.c-area { height: auto; padding: 10px 12px; resize: vertical; line-height: 1.45; }
+.c-bday-inputs { display: flex; gap: 8px; }
+.c-bday-inputs select { height: 42px; min-width: 0; }
+.c-bday-inputs select:first-child { flex: 0 0 84px; }
+.c-year { flex: 0 0 80px; width: 80px; text-align: center; }
+.c-sibs { display: flex; flex-direction: column; gap: 8px; }
+.c-sib-row { display: flex; gap: 8px; align-items: center; }
+.c-sib-row .c-input:first-child { flex: 0 0 34%; }
+.c-note-input { color: var(--text); font-size: 16px; padding-top: 8px; }
+.c-date-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 6px; font-size: 15px; }
+
+@media (min-width: 900px) {
+  .c-bdays { margin: 6px 0 0; padding: 4px 0 2px; flex-wrap: wrap; }
+  .c-tiles { max-width: 520px; }
+  .c-bday:hover { background: color-mix(in srgb, var(--text) 8%, var(--elev)); }
+}

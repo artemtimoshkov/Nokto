@@ -10,6 +10,7 @@ import { Today } from './screens/Today'
 import { Goals } from './screens/Goals'
 import { AreaGoals } from './screens/AreaGoals'
 import { Achieved } from './screens/Achieved'
+import { MiniApps } from './screens/MiniApps'
 import { TabBar } from './components/TabBar'
 import { Sidebar } from './components/Sidebar'
 import { Toast } from './components/Toast'
@@ -54,12 +55,12 @@ export default function App() {
 
   return (
     <StoreProvider key={userKey} backend={backend}>
-      <Shell email={session?.user.email ?? 'Demo'} onSignOut={signOut} />
+      <Shell email={session?.user.email ?? 'Demo'} demo={userKey === 'demo'} onSignOut={signOut} />
     </StoreProvider>
   )
 }
 
-function Shell({ email, onSignOut }: { email: string; onSignOut(): void }) {
+function Shell({ email, demo, onSignOut }: { email: string; demo: boolean; onSignOut(): void }) {
   const route = useRoute()
   const [account, setAccount] = useState(false)
   const openAccount = () => setAccount(true)
@@ -71,6 +72,7 @@ function Shell({ email, onSignOut }: { email: string; onSignOut(): void }) {
         {route.tab === 'goals' && !route.area && <Goals onAccount={openAccount} />}
         {route.tab === 'goals' && route.area === 'achieved' && <Achieved />}
         {route.tab === 'goals' && route.area && route.area !== 'achieved' && <AreaGoals key={route.area} areaId={route.area as AreaId} />}
+        {route.tab === 'apps' && <MiniApps path={route.path} demo={demo} onAccount={openAccount} />}
       </div>
       <TabBar tab={route.tab} />
       <Toast />

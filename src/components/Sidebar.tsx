@@ -22,6 +22,9 @@ export function Sidebar({ route, email, onAccount }: { route: Route; email: stri
         <button className={route.tab === 'goals' && !area ? 'active' : ''} onClick={() => go('/goals')}>
           <Icon d={I.star} size={19} /><span className="grow">Bucket list</span>
         </button>
+        <button className={route.tab === 'apps' ? 'active' : ''} onClick={() => go('/apps')}>
+          <Icon d={I.apps} size={19} /><span className="grow">Mini apps</span>
+        </button>
       </nav>
       <nav className="side-nav areas-nav">
         {areas.map(a => {

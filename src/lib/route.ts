@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 
-export type Route = { tab: 'today' } | { tab: 'goals'; area?: string }
+export type Tab = 'today' | 'goals' | 'apps'
+/** `#/apps/<app>/<…rest>`: `path` is everything after `apps`, handed to the mini app. */
+export type Route = { tab: 'today' } | { tab: 'goals'; area?: string } | { tab: 'apps'; path: string[] }
 
 const parse = (): Route => {
-  const parts = location.hash.replace(/^#\/?/, '').split('/')
+  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
   if (parts[0] === 'goals') return { tab: 'goals', area: parts[1] || undefined }
+  if (parts[0] === 'apps') return { tab: 'apps', path: parts.slice(1) }
   return { tab: 'today' }
 }
 

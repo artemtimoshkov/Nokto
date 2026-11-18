@@ -8,6 +8,7 @@ import { iconPath } from '../data/areas'
 import type { AreaId, Priority, Todo } from '../lib/types'
 import { useStore } from '../lib/store'
 import { dayLabel, timeLabel } from '../lib/dates'
+import { parseQuickAdd } from '../lib/quickAdd'
 
 type Panel = null | 'date' | 'priority' | 'area'
 
@@ -19,11 +20,14 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
   const [priority, setPriority] = useState<Priority | null>(null)
   const [when, setWhen] = useState<When>({ date: null, time: null, recurrence: null })
   const [panel, setPanel] = useState<Panel>(null)
+  // Fields picked by hand; typed dates/priorities no longer override these.
+  const [touched, setTouched] = useState({ date: false, priority: false })
   const input = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (!open) return
     setPanel(null)
+    setTouched({ date: false, priority: false })
     setTitle(todo?.title ?? '')
     setArea(todo?.area ?? null)
     setPriority(todo ? todo.priority : null)
@@ -31,21 +35,29 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
     if (!todo) setTimeout(() => input.current?.focus(), 60)
   }, [open, todo])
 
+  // New tasks only: read a date, time and priority out of the text as it's typed.
+  const parsed = !todo && title.trim()
+    ? parseQuickAdd(title, { date: !touched.date, priority: !touched.priority })
+    : null
+  const effWhen: When = parsed?.date ? { date: parsed.date, time: parsed.time, recurrence: null } : when
+  const effPriority = parsed?.priority ?? priority
+
   const submit = () => {
-    const t = title.trim()
+    const t = (parsed?.title ?? title).trim()
     if (!t) return
-    const data = { title: t, area, priority: priority ?? 3, due_date: when.date, due_time: when.time, recurrence: when.recurrence }
+    const data = { title: t, area, priority: effPriority ?? 3, due_date: effWhen.date, due_time: effWhen.time, recurrence: effWhen.recurrence }
     if (todo) { store.saveTodo(todo.id, data); onClose() }
     else {
       store.addTodo(data)
       // Stay open for quick entry of the next one, Todoist-style.
       setTitle(''); setPriority(null); setArea(null); setWhen({ date: null, time: null, recurrence: null })
+      setTouched({ date: false, priority: false })
       input.current?.focus()
     }
   }
 
   const a = store.areaOf(area)
-  const dateText = when.date ? dayLabel(when.date) + (when.time ? ' ' + timeLabel(when.time) : '') : 'Date'
+  const dateText = effWhen.date ? dayLabel(effWhen.date) + (effWhen.time ? ' ' + timeLabel(effWhen.time) : '') : 'Date'
 
   return (
     <>
@@ -55,12 +67,12 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
           onChange={e => setTitle(e.target.value.replace(/\n/g, ''))}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />
         <div className="chips">
-          <button className={`chip ${when.date ? 'set' : ''} ${when.date && dayLabel(when.date) === 'Today' ? 'today' : ''}`} onClick={() => setPanel('date')}>
+          <button className={`chip ${effWhen.date ? 'set' : ''} ${effWhen.date && dayLabel(effWhen.date) === 'Today' ? 'today' : ''}`} onClick={() => setPanel('date')}>
             <Icon d={I.calendar} size={16} />{dateText}
-            {when.recurrence && <Icon d={I.repeat} size={13} />}
+            {effWhen.recurrence && <Icon d={I.repeat} size={13} />}
           </button>
-          <button className={`chip ${priority ? 'set p' + priority : ''}`} onClick={() => setPanel('priority')}>
-            <Icon d={I.flag} size={16} fill={!!priority && priority < 3} />{priority ? `P${priority}` : 'Priority'}
+          <button className={`chip ${effPriority ? 'set p' + effPriority : ''}`} onClick={() => setPanel('priority')}>
+            <Icon d={I.flag} size={16} fill={!!effPriority && effPriority < 3} />{effPriority ? `P${effPriority}` : 'Priority'}
           </button>
           <button className={`chip ${a ? 'set' : ''}`} onClick={() => setPanel('area')}>
             <Icon d={a ? iconPath(a.icon) : I.tag} size={16} />{a?.name ?? 'Area'}
@@ -83,8 +95,8 @@ export function TodoSheet({ open, todo, onClose }: { open: boolean; todo: Todo |
         </div>
       </Sheet>
 
-      <DatePicker open={open && panel === 'date'} value={when} onChange={setWhen} onClose={() => setPanel(null)} />
-      <PriorityPicker open={open && panel === 'priority'} value={priority ?? 3} onChange={setPriority} onClose={() => setPanel(null)} />
+      <DatePicker open={open && panel === 'date'} value={effWhen} onChange={w => { setWhen(w); setTouched(t => ({ ...t, date: true })) }} onClose={() => setPanel(null)} />
+      <PriorityPicker open={open && panel === 'priority'} value={effPriority ?? 3} onChange={p => { setPriority(p); setTouched(t => ({ ...t, priority: true })) }} onClose={() => setPanel(null)} />
       <AreaPicker open={open && panel === 'area'} value={area} onChange={setArea} onClose={() => setPanel(null)} />
     </>
   )

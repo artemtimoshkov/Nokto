@@ -248,7 +248,9 @@ create index if not exists recipes_user_idx on public.recipes(user_id);
 alter table public.recipes enable row level security;
 drop policy if exists "own recipes" on public.recipes;
 create policy "own recipes" on public.recipes for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+-- ---------------------------------------------------------------------------
 -- Mini app: Folio (books you've read). One row per book, with its three key
 -- lessons and favourite quotes kept as JSON arrays of strings.
 create table if not exists public.books (

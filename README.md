@@ -6,6 +6,7 @@ Your North Star goals and everyday to-dos in one minimal app. It installs on you
 - **Bucket list**: life goals grouped by area of life. You start with 10 areas and can add, rename or delete them, and placeholder goals are pre-filled for you to edit.
 - **Search**: a search bar on Today and Bucket list (press `/` on a laptop).
 - **Mini apps**: fun side apps under their own tab. The first is **Circle**, a small friends CRM: birthdays, siblings, where they grew up, nationality, photo, type of friend (best, good, acquaintance), LinkedIn and Instagram, when you last talked, and dated notes on what you talked about.
+  The second is **Reps**, a workout log built around the exercises you know. Add the ones you like from a built-in catalog of about 900 (each with start and end photos, shown as a short animation, and step-by-step instructions) or create your own, grouped by muscle. Start a workout, pick an exercise and log sets as reps × kg, bodyweight reps, time, or cardio (minutes, km, km/h). Each set is pre-filled with what you did last time.
 
 Each mini app lives in its own folder under `src/apps/` and is listed in `src/apps/registry.ts`. It's only downloaded when you first open it, has its own Supabase tables, and keeps its own copy of data in demo mode.
 
@@ -13,7 +14,7 @@ Stack: Vite + React + TypeScript, Supabase (auth + Postgres), and a PWA via `vit
 
 ## 1. Supabase
 
-1. In **SQL Editor**, paste and run [`supabase/schema.sql`](supabase/schema.sql). It creates the `goals` and `todos` tables, the mini-app tables (`friends`, `friend_notes`) with row-level security, a trigger that seeds placeholder goals for each new account, and the small sign-in handoff table described below. You can safely run it again after updates.
+1. In **SQL Editor**, paste and run [`supabase/schema.sql`](supabase/schema.sql). It creates the `goals` and `todos` tables, the mini-app tables (`friends`, `friend_notes`, `reps_exercises`, `reps_workouts`, `reps_sets`) with row-level security, a trigger that seeds placeholder goals for each new account, and the small sign-in handoff table described below. You can safely run it again after updates.
 2. Turn on Google sign-in. See **Google sign-in** below. Keep **Email** enabled too, since it's the backup option.
 3. In **Authentication → URL Configuration**, set:
    - **Site URL**: your Vercel URL, for example `https://nokto.vercel.app`.
@@ -75,3 +76,7 @@ Without env vars, the login screen offers a **demo mode** that stores data only 
 - **Missed**: swipe a task left on your phone (or use **Missed** in its window, or the × on hover on a laptop) to cross it out. A one-off task leaves the list but isn't deleted. A repeating task skips only today's occurrence and moves to the next date. Each done or missed occurrence is recorded in `todo_log`.
 - **Offline**: the app itself is cached by the service worker, and your data is kept on the device, so Nokto opens and works with no connection. Every change goes into an outbox in local storage first and is sent to Supabase in order; offline, it waits and is sent once you're back online or open the app again. A small **Offline · N to sync** pill shows while changes are waiting. New rows get their ids on the device, so a change can be queued before the server has seen the row. See `src/lib/outbox.ts`.
 - **Sync**: changes appear on screen straight away. Whenever the app comes back into focus or online, it sends anything queued, then refetches, so your phone and laptop stay in step. Changes made on two devices while both are offline are last-write-wins per field.
+
+## Credits
+
+Reps' exercise catalog, photos and instructions come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db), released into the public domain. `node scripts/reps-catalog.mjs` rebuilds `src/apps/reps/catalog.json` from the latest version.

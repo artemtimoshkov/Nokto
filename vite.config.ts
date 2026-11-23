@@ -23,9 +23,19 @@ export default defineConfig({
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
-      // Precache the whole app (Circle's lazy chunk and the icons too) so it opens with no connection.
-      workbox: { navigateFallbackDenylist: [/^\/auth/], globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'] }
+      // Precache the whole app (the mini apps' lazy chunks and the icons too) so it opens with no connection.
+      workbox: {
+        navigateFallbackDenylist: [/^\/auth/],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // Reps' exercise photos come from the free-exercise-db repo; keep the ones you've seen for offline.
+        runtimeCaching: [{
+          urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,
+          handler: 'CacheFirst',
+          options: { cacheName: 'reps-photos', expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 365 }, cacheableResponse: { statuses: [0, 200] } },
+        }],
+      }
     })
   ],
+  build: { chunkSizeWarningLimit: 800 }, // Reps' exercise catalog is one lazy ~760 kB chunk
   test: { environment: 'node' }
 } as any)

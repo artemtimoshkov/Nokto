@@ -223,3 +223,58 @@ alter table public.friend_notes enable row level security;
 drop policy if exists "own friend notes" on public.friend_notes;
 create policy "own friend notes" on public.friend_notes for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- Mini app: Reps (workout log). Your exercises (from the built-in catalog or
+-- your own), workouts, and the sets logged in each.
+create table if not exists public.reps_exercises (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  catalog_id text,
+  name text not null,
+  muscle text not null default 'chest',
+  kind text not null default 'weight' check (kind in ('weight', 'reps', 'time', 'cardio')),
+  video_url text not null default '',
+  archived boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists reps_exercises_user_idx on public.reps_exercises(user_id);
+alter table public.reps_exercises enable row level security;
+drop policy if exists "own reps exercises" on public.reps_exercises;
+create policy "own reps exercises" on public.reps_exercises for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create table if not exists public.reps_workouts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  date date not null default current_date,
+  started_at timestamptz not null default now(),
+  ended_at timestamptz,
+  exercise_ids jsonb not null default '[]',
+  note text not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists reps_workouts_user_idx on public.reps_workouts(user_id, date);
+alter table public.reps_workouts enable row level security;
+drop policy if exists "own reps workouts" on public.reps_workouts;
+create policy "own reps workouts" on public.reps_workouts for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create table if not exists public.reps_sets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  workout_id uuid not null references public.reps_workouts(id) on delete cascade,
+  exercise_id uuid not null references public.reps_exercises(id) on delete cascade,
+  reps integer,
+  weight numeric,
+  seconds integer,
+  distance numeric,
+  speed numeric,
+  created_at timestamptz not null default now()
+);
+create index if not exists reps_sets_user_idx on public.reps_sets(user_id, exercise_id);
+create index if not exists reps_sets_workout_idx on public.reps_sets(workout_id);
+alter table public.reps_sets enable row level security;
+drop policy if exists "own reps sets" on public.reps_sets;
+create policy "own reps sets" on public.reps_sets for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());

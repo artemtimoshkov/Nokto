@@ -31,12 +31,12 @@ export const MINI_APPS: MiniApp[] = [
   {
     id: 'kitchen',
     name: 'Raw',
-    icon: 'M9 9l4-4 6 6-4 4z M12 12L4 20',
+    icon: 'M8 3v5a4 4 0 0 0 8 0V3 M12 3v7 M12 12v9',
     Component: lazy(() => import('./kitchen')),
   },
   {
     id: 'folio',
-    name: 'TLDR',
+    name: 'TL;DR',
     icon: 'M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z M4 20a2 2 0 0 0 2 2h13v-4 M8 7h7',
     Component: lazy(() => import('./folio')),
   },

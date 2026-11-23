@@ -44,7 +44,7 @@ export function FriendDetail({ id }: { id: string }) {
 
   return (
     <main className="screen">
-      <button className="back mobile-only" onClick={() => go('/apps/circle')}><Icon d={I.back} size={18} />Circle</button>
+      <button className="back" onClick={() => go('/apps/circle')}><Icon d={I.back} size={18} />Circle</button>
       <header className="head c-head">
         <div className="c-who">
           <Avatar friend={f} size={72} />

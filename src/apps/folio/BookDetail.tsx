@@ -28,7 +28,7 @@ export function BookDetail({ id }: { id: string }) {
 
   return (
     <main className="screen">
-      <button className="back mobile-only" onClick={() => go('/apps/folio')}><Icon d={I.back} size={18} />Folio</button>
+      <button className="back" onClick={() => go('/apps/folio')}><Icon d={I.back} size={18} />TLDR</button>
       <header className="head f-head">
         <div className="f-who">
           <Cover book={b} width={92} />

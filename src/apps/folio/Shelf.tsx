@@ -24,10 +24,10 @@ export function Shelf() {
 
   return (
     <main className="screen wide">
-      <button className="back mobile-only" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
+      <button className="back" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
       <header className="head">
         <div>
-          <h1>Folio</h1>
+          <h1>TLDR</h1>
           {!loading && books.length > 0 && (
             <p className="sub">{books.length} {books.length === 1 ? 'book' : 'books'}{finishedThisYear > 0 && ` · ${finishedThisYear} read in ${thisYear}`}</p>
           )}
@@ -37,7 +37,7 @@ export function Shelf() {
       {notSetUp ? (
         <div className="empty">
           <div className="empty-mark"><Icon d={F.book} size={34} /></div>
-          <p>Folio isn't set up yet.</p>
+          <p>TLDR isn't set up yet.</p>
           <p className="muted small">Run <code>supabase/schema.sql</code> again in the Supabase SQL Editor, then reopen this page.</p>
         </div>
       ) : (

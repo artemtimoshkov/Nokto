@@ -40,4 +40,10 @@ export const MINI_APPS: MiniApp[] = [
     icon: 'M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z M4 20a2 2 0 0 0 2 2h13v-4 M8 7h7',
     Component: lazy(() => import('./folio')),
   },
+  {
+    id: 'reps',
+    name: 'Reps',
+    icon: 'M6.5 6.5v11 M17.5 6.5v11 M3.5 9v6 M20.5 9v6 M6.5 12h11',
+    Component: lazy(() => import('./reps')),
+  },
 ]

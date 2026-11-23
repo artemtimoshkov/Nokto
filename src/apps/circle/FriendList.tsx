@@ -31,7 +31,7 @@ export function FriendList() {
 
   return (
     <main className="screen">
-      <button className="back mobile-only" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
+      <button className="back" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
       <header className="head">
         <div>
           <h1>Circle</h1>

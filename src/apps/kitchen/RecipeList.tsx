@@ -23,10 +23,10 @@ export function RecipeList() {
 
   return (
     <main className="screen wide">
-      <button className="back mobile-only" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
+      <button className="back" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
       <header className="head">
         <div>
-          <h1>Kitchen</h1>
+          <h1>Raw</h1>
           {!loading && recipes.length > 0 && <p className="sub">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}</p>}
         </div>
         {!notSetUp && <button className="avatar desktop-only" aria-label="Add recipe" onClick={() => setAdding(true)}><Icon d={I.plus} size={18} /></button>}
@@ -35,7 +35,7 @@ export function RecipeList() {
       {notSetUp ? (
         <div className="empty">
           <div className="empty-mark"><Icon d={K.pot} size={34} /></div>
-          <p>Kitchen isn't set up yet.</p>
+          <p>Raw isn't set up yet.</p>
           <p className="muted small">Run <code>supabase/schema.sql</code> again in the Supabase SQL Editor, then reopen this page.</p>
         </div>
       ) : (

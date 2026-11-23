@@ -13,7 +13,7 @@ import type { Workout } from './types'
 export function RepsHead({ tab, sub }: { tab: 'workouts' | 'exercises'; sub?: string }) {
   return (
     <>
-      <button className="back mobile-only" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
+      <button className="back" onClick={() => go('/apps')}><Icon d={I.back} size={18} />Mini apps</button>
       <header className="head">
         <div>
           <h1>Reps</h1>

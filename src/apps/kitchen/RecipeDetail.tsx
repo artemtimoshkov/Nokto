@@ -36,7 +36,7 @@ export function RecipeDetail({ id }: { id: string }) {
 
   return (
     <main className="screen wide k-detail">
-      <button className="back mobile-only" onClick={() => go('/apps/kitchen')}><Icon d={I.back} size={18} />Kitchen</button>
+      <button className="back" onClick={() => go('/apps/kitchen')}><Icon d={I.back} size={18} />Raw</button>
       <header className="head k-head">
         <div className="k-who">
           <span className="k-emoji lg">{r.emoji || '🍽️'}</span>

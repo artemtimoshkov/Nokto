@@ -223,3 +223,29 @@ alter table public.friend_notes enable row level security;
 drop policy if exists "own friend notes" on public.friend_notes;
 create policy "own friend notes" on public.friend_notes for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- Mini app: Folio (books you've read). One row per book, with its three key
+-- lessons and favourite quotes kept as JSON arrays of strings.
+create table if not exists public.books (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  title text not null,
+  author text not null default '',
+  status text not null default 'reading' check (status in ('reading', 'finished')),
+  rating smallint check (rating between 1 and 5),
+  started_on date,
+  finished_on date,
+  cover text,
+  lessons jsonb not null default '["","",""]',
+  quotes jsonb not null default '[]',
+  thoughts text not null default '',
+  summary text not null default '',
+  recommend_to text not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists books_user_idx on public.books(user_id);
+alter table public.books enable row level security;
+drop policy if exists "own books" on public.books;
+create policy "own books" on public.books for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());

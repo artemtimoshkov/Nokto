@@ -5,7 +5,7 @@ Your North Star goals and everyday to-dos in one minimal app. It installs on you
 - **Today**: Todoist-style to-dos with priority, area of life, date, time and repeats (daily, weekdays, weekly, monthly, quarterly, or custom with an end date).
 - **Bucket list**: life goals grouped by area of life. You start with 10 areas and can add, rename or delete them, and placeholder goals are pre-filled for you to edit.
 - **Search**: a search bar on Today and Bucket list (press `/` on a laptop).
-- **Mini apps**: fun side apps under their own tab. The first is **Circle**, a small friends CRM: birthdays, siblings, where they grew up, nationality, photo, type of friend (best, good, acquaintance), LinkedIn and Instagram, when you last talked, and dated notes on what you talked about.
+- **Mini apps**: fun side apps under their own tab. The first is **Circle**, a small friends CRM: birthdays, siblings, where they grew up, nationality, photo, type of friend (best, good, acquaintance), LinkedIn and Instagram, when you last talked, and dated notes on what you talked about. The second is **Folio**, your library of books you've read: a shelf of covers showing title, author, when you read it, your rating and whether you're reading or finished, and for each book a short summary, three key lessons, your thoughts, favourite quotes, and who you'd recommend it to.
 
 Each mini app lives in its own folder under `src/apps/` and is listed in `src/apps/registry.ts`. It's only downloaded when you first open it, has its own Supabase tables, and keeps its own copy of data in demo mode.
 
@@ -13,7 +13,7 @@ Stack: Vite + React + TypeScript, Supabase (auth + Postgres), and a PWA via `vit
 
 ## 1. Supabase
 
-1. In **SQL Editor**, paste and run [`supabase/schema.sql`](supabase/schema.sql). It creates the `goals` and `todos` tables, the mini-app tables (`friends`, `friend_notes`) with row-level security, a trigger that seeds placeholder goals for each new account, and the small sign-in handoff table described below. You can safely run it again after updates.
+1. In **SQL Editor**, paste and run [`supabase/schema.sql`](supabase/schema.sql). It creates the `goals` and `todos` tables, the mini-app tables (`friends`, `friend_notes`, `books`) with row-level security, a trigger that seeds placeholder goals for each new account, and the small sign-in handoff table described below. You can safely run it again after updates.
 2. Turn on Google sign-in. See **Google sign-in** below. Keep **Email** enabled too, since it's the backup option.
 3. In **Authentication → URL Configuration**, set:
    - **Site URL**: your Vercel URL, for example `https://nokto.vercel.app`.

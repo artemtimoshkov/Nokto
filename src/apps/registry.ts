@@ -28,4 +28,10 @@ export const MINI_APPS: MiniApp[] = [
     icon: 'M9 11a3 3 0 1 0 0-6a3 3 0 0 0 0 6z M3 19c0-3 3-5 6-5s6 2 6 5 M16 5.5a3 3 0 0 1 0 5.5 M18 14c2 .6 3 2.4 3 5',
     Component: lazy(() => import('./circle')),
   },
+  {
+    id: 'folio',
+    name: 'Folio',
+    icon: 'M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z M4 20a2 2 0 0 0 2 2h13v-4 M8 7h7',
+    Component: lazy(() => import('./folio')),
+  },
 ]

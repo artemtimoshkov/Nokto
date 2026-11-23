@@ -7,18 +7,16 @@ import { RecipeSheet } from './RecipeSheet'
 import { durationLabel, totalMinutes, type Recipe } from './types'
 import { K } from './icons'
 
-const searchable = (r: Recipe) => [r.title, r.notes, r.source, ...r.tags, ...r.ingredients.map(i => i.name)]
+const searchable = (r: Recipe) => [r.title, r.notes, r.source, ...r.ingredients.map(i => i.name)]
 
 export function RecipeList() {
   const { recipes, loading, notSetUp, addSamples } = useKitchen()
   const [q, setQ] = useState('')
-  const [tag, setTag] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
 
   const sorted = useMemo(() => [...recipes].sort((a, b) => a.title.localeCompare(b.title)), [recipes])
-  const tags = useMemo(() => [...new Set(recipes.flatMap(r => r.tags))].sort((a, b) => a.localeCompare(b)), [recipes])
-  const shown = useMemo(() => sorted.filter(r => (!tag || r.tags.includes(tag)) && (!q.trim() || searchable(r).some(t => matches(t, q)))), [sorted, tag, q])
-  const filtering = !!(tag || q.trim())
+  const shown = useMemo(() => sorted.filter(r => (!q.trim() || searchable(r).some(t => matches(t, q)))), [sorted, q])
+  const filtering = !!q.trim()
   const favs = shown.filter(r => r.favourite)
 
   return (
@@ -34,19 +32,13 @@ export function RecipeList() {
 
       {notSetUp ? (
         <div className="empty">
-          <div className="empty-mark"><Icon d={K.pot} size={34} /></div>
+          <div className="empty-mark"><Icon d={K.spatula} size={34} /></div>
           <p>Raw isn't set up yet.</p>
           <p className="muted small">Run <code>supabase/schema.sql</code> again in the Supabase SQL Editor, then reopen this page.</p>
         </div>
       ) : (
         <>
           {recipes.length > 0 && <SearchBar value={q} onChange={setQ} placeholder="Search recipes and ingredients" />}
-          {tags.length > 0 && (
-            <div className="chips k-tags">
-              <button className={`chip ${!tag ? 'set' : ''}`} onClick={() => setTag(null)}>All</button>
-              {tags.map(t => <button key={t} className={`chip ${tag === t ? 'set' : ''}`} onClick={() => setTag(tag === t ? null : t)}>{t}</button>)}
-            </div>
-          )}
 
           {!filtering && favs.length > 0 && (
             <section className="group">
@@ -64,9 +56,9 @@ export function RecipeList() {
 
           {!loading && recipes.length === 0 && (
             <div className="empty">
-              <div className="empty-mark"><Icon d={K.pot} size={34} /></div>
+              <div className="empty-mark"><Icon d={K.spatula} size={34} /></div>
               <p>Your cookbook is empty.</p>
-              <p className="muted small">Add your favourite recipes, or paste one from a website.</p>
+              <p className="muted small">Add your favourite recipes.</p>
               <div className="row-btns" style={{ marginTop: 18 }}>
                 <button className="btn primary" onClick={() => setAdding(true)}>Add a recipe</button>
                 <button className="btn ghost" onClick={addSamples}>Try 3 samples</button>

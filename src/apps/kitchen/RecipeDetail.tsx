@@ -42,10 +42,8 @@ export function RecipeDetail({ id }: { id: string }) {
           <span className="k-emoji lg">{r.emoji || '🍽️'}</span>
           <div>
             <h1>{r.title}</h1>
-            {(r.tags.length > 0 || r.cooked_count > 0) && (
+            {r.cooked_count > 0 && (
               <p className="sub">
-                {r.tags.join(' · ')}
-                {r.tags.length > 0 && r.cooked_count > 0 && ' · '}
                 {r.cooked_count > 0 && `Cooked ${r.cooked_count}×${r.last_cooked ? `, last ${format(fromKey(r.last_cooked), 'd MMM')}` : ''}`}
               </p>
             )}

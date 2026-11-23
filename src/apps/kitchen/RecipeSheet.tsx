@@ -4,33 +4,17 @@ import { Icon, I } from '../../components/Icon'
 import { go } from '../../lib/route'
 import { uuid } from '../../lib/uuid'
 import { useKitchen } from './store'
-import { guessAction, guessMinutes, guessUses, parseRecipe } from './parse'
+import { guessAction, guessMinutes, guessUses } from './parse'
 import { emptyRecipe, stepMinutes, type Ingredient, type Recipe, type RecipeDraft, type Step } from './types'
 import { K } from './icons'
-
-const PASTE_HINT = `Banana bread
-Serves 10
-
-Ingredients
-3 ripe bananas
-75 g butter, melted
-150 g brown sugar
-…
-
-Method
-1. Preheat the oven to 180°C.
-2. Mash the bananas…`
 
 const newIngredient = (): Ingredient => ({ id: uuid(), name: '', amount: '' })
 const newStep = (): Step => ({ id: uuid(), text: '', action: '', minutes: null, uses: [] })
 
-/** Add (recipe = null) or edit a recipe. New recipes can also be pasted in as text. */
+/** Add (recipe = null) or edit a recipe. */
 export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: Recipe | null; onClose(): void }) {
   const kitchen = useKitchen()
   const [d, setD] = useState<RecipeDraft>(emptyRecipe)
-  const [tags, setTags] = useState('')
-  const [mode, setMode] = useState<'write' | 'paste'>('write')
-  const [paste, setPaste] = useState('')
   const [confirm, setConfirm] = useState(false)
   /** Steps whose ingredients or minutes were set by hand, so typing no longer overwrites them. */
   const [manual, setManual] = useState<Set<string>>(new Set())
@@ -48,8 +32,7 @@ export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: 
       setManual(new Set())
       setTimeout(() => titleRef.current?.focus(), 60)
     }
-    setTags(recipe?.tags.join(', ') ?? '')
-    setMode('write'); setPaste(''); setConfirm(false)
+    setConfirm(false)
   }, [open, recipe])
 
   useEffect(() => {
@@ -92,13 +75,6 @@ export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: 
     setStep(i, { uses: s.uses.includes(iid) ? s.uses.filter(x => x !== iid) : [...s.uses, iid] })
   }
 
-  const readPaste = () => {
-    const p = parseRecipe(paste)
-    setD(x => ({ ...p, title: p.title || x.title, emoji: x.emoji, ingredients: p.ingredients.length ? p.ingredients : [newIngredient()], steps: p.steps.length ? p.steps : [newStep()] }))
-    setManual(new Set())
-    setMode('write')
-  }
-
   const submit = () => {
     const title = d.title.trim()
     if (!title) return
@@ -108,7 +84,6 @@ export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: 
       ...d, title,
       emoji: d.emoji.trim(),
       servings: Math.max(1, Math.round(d.servings) || 1),
-      tags: [...new Set(tags.split(',').map(t => t.trim()).filter(Boolean))],
       ingredients,
       steps: d.steps.map(s => ({ ...s, text: s.text.trim(), action: s.action.trim(), uses: s.uses.filter(u => known.has(u)) })).filter(s => s.text),
       notes: d.notes.trim(), source: d.source.trim(),
@@ -124,21 +99,7 @@ export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: 
   return (
     <>
       <Sheet open={open && !confirm} onClose={onClose} className="todo-sheet k-sheet">
-        {!recipe && (
-          <div className="seg k-mode" role="radiogroup" aria-label="How to add">
-            <button role="radio" aria-checked={mode === 'write'} className={mode === 'write' ? 'sel' : ''} onClick={() => setMode('write')}><Icon d={K.edit} size={15} />Write it</button>
-            <button role="radio" aria-checked={mode === 'paste'} className={mode === 'paste' ? 'sel' : ''} onClick={() => setMode('paste')}><Icon d={K.paste} size={15} />Paste text</button>
-          </div>
-        )}
-
-        {mode === 'paste' ? (
-          <div className="k-form">
-            <p className="muted small hint">Paste a recipe from a website, a note or a message. You can check everything before saving.</p>
-            <textarea className="c-input c-area k-paste" rows={12} placeholder={PASTE_HINT} value={paste} onChange={e => setPaste(e.target.value)} autoFocus />
-            <button className="btn primary wide" disabled={!paste.trim()} onClick={readPaste}>Read recipe</button>
-          </div>
-        ) : (
-          <>
+        <>
             <div className="k-title-row">
               <input className="k-emoji-input" aria-label="Emoji" placeholder="🍽️" value={d.emoji} maxLength={4} onChange={e => set('emoji', e.target.value)} />
               <input ref={titleRef} className="title-input" placeholder="Recipe name" value={d.title} enterKeyHint="next" onChange={e => set('title', e.target.value)} />
@@ -156,10 +117,6 @@ export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: 
                     value={d.time_minutes ?? ''} onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); set('time_minutes', v ? Number(v) : null) }} />
                 </label>
               </div>
-              <label className="c-field">
-                <span className="c-label">Tags</span>
-                <input className="c-input" placeholder="Pasta, Quick, Weeknight" value={tags} onChange={e => setTags(e.target.value)} />
-              </label>
 
               <div className="c-field">
                 <span className="c-label">Ingredients</span>
@@ -227,8 +184,7 @@ export function RecipeSheet({ open, recipe, onClose }: { open: boolean; recipe: 
                 <Icon d={recipe ? I.check : I.arrowUp} size={20} />
               </button>
             </div>
-          </>
-        )}
+        </>
       </Sheet>
 
       <Sheet open={open && confirm} onClose={() => setConfirm(false)}>
